@@ -129,7 +129,9 @@ dis_dt_03y<- setNames(dis_dt_03y, dis_03y)
 
 #* New in 2003 
 # osteo = osteoporosis 骨質疏鬆
+```
 
+```{r}
 
 dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y)
 
@@ -144,6 +146,90 @@ dt_03y [, iadl_receive_help := NULL, ]
 
 ```{r}
 # Now is their family members 
+dt_03y <- dt_03y[, "1_livstat":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "1_livwhere":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "1_meet":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "1_tele":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "2_livstat":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "2_livwhere":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "2_meet":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "2_tele":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "3_livstat":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "3_livwhere":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "3_meet":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "3_tele":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "4_livstat":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "4_livwhere":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "4_meet":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "4_tele":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "5_livstat":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "5_livwhere":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "5_meet":=0] #living status =0 : living together
+dt_03y <- dt_03y[, "5_tele":=0] #living status =0 : living together
+
+# 1~5 iving together (5)
+# 6~12 living not together(7)
+# 13~ 22 others (10)
+dt_03y <- dt_03y[, "13_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "13_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "13_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "13_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "14_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "14_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "14_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "14_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "15_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "15_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "15_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "15_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "16_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "16_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "16_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "16_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "17_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "17_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "17_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "17_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "18_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "18_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "18_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "18_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "19_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "19_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "19_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "19_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "20_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "20_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "20_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "20_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "21_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "21_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "21_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "21_tele":=99] #living status =99 : others
+dt_03y <- dt_03y[, "22_livstat":=99] #living status =99 : others
+dt_03y <- dt_03y[, "22_livwhere":=99] #living status =99 : others
+dt_03y <- dt_03y[, "22_meet":=99] #living status =99 : others
+dt_03y <- dt_03y[, "22_tele":=99] #living status =99 : others
+
+
+
+
+dt_03y <- dt_03y[, "survey_year":=2003]
+dt_03y <- dt_03y[, "survey_year":=2003]
+dt_03y <- dt_03y[, "survey_year":=2003]
+
+fam_dt_03y <- dt_03y[,c("b501","b601","b701","b801","b901","b1001","1_livstat","1_livwhere","1_meet","1_tele","b502","b602","b702","b802","b902","b1002","2_livstat","2_livwhere","2_meet","2_tele","b503","b603","b703","b803","b903","b1003","3_livstat","3_livwhere","3_meet","3_tele","b504","b604","b704","b804","b904","b1004","4_livstat","4_livwhere","4_meet","4_tele","b505","b605","b705","b805","b905","b1005","5_livstat","5_livwhere","5_meet","5_tele","b511","b611","b711","b811","b911","b1011","b1111","b1211","b1311","b1411","b512","b612","b712","b812","b912","b1012","b1112","b1212","b1312","b1412","b513","b613","b713","b813","b913","b1013","b1113","b1213","b1313","b1413","b514","b614","b714","b814","b914","b1014","b1114","b1214","b1314","b1414","b515","b615","b715","b815","b915","b1015","b1115","b1215","b1315","b1415","b516","b616","b716","b816","b916","b1016","b1116","b1216","b1316","b1416","b516","b617","b717","b817","b917","b1017","b1117","b1217","b1317","b1417","b1601","b1701","b1801","b1901","b2001","b2101","13_livstat","13_livwhere","13_meet","13_tele","b1602","b1702","b1802","b1902","b2002","b2102","14_livstat","14_livwhere","14_meet","14_tele","b1603","b1703","b1803","b1903","b2003","b2103","15_livstat","15_livwhere","15_meet","15_tele","b1604","b1704","b1804","b1904","b2004","b2104","16_livstat","16_livwhere","16_meet","16_tele","b1605","b1705","b1805","b1905","b2005","b2105","17_livstat","17_livwhere","17_meet","17_tele","b1606","b1706","b1806","b1906","b2006","b2106","b1606","18_livstat","18_livwhere","18_meet","18_tele","b1707","b1807","b1907","b2007","b2107","19_livstat","19_livwhere","19_meet","19_tele","b1608","b1708","b1808","b1908","b2008","b2108","20_livstat","20_livwhere","20_meet","20_tele","b1609","b1709","b1809","b1909","b2009","b2109","21_livstat","21_livwhere","21_meet","21_tele","b1610","b1710","b1810","b1910","b2010","b2110","22_livstat","22_livwhere","22_meet","22_tele"),]
+
+# b_01 -> living together
+# b_11 -> not living togther
+
+
+which(colnames(dt_03y) =="b1417")
+
+fam_03y <- c("1_relation","1_sex","1_age","1_educ","1_work","1_marstat","1_livstat","1_livwhere","1_meet","1_tele","2_relation","2_sex","2_age","2_educ","2_work","2_marstat","2_livstat","2_livwhere","2_meet","2_tele","3_relation","3_sex","3_age","3_educ","3_work","3_marstat","3_livstat","3_livwhere","3_meet","3_tele","4_relation","4_sex","4_age","4_educ","4_work","4_marstat","4_livstat","4_livwhere","4_meet","4_tele","5_relation","5_sex","5_age","5_educ","5_work","5_marstat","5_livstat","5_livwhere","5_meet","5_tele","6_relation","6_sex","6_age","6_educ","6_work","6_marstat","6_livstat","6_livwhere","6_meet","6_tele","7_relation","7_sex","7_age","7_educ","7_work","7_marstat","7_livstat","7_livwhere","7_meet","7_tele","8_relation","8_sex","8_age","8_educ","8_work","8_marstat","8_livstat","8_livwhere","8_meet","8_tele","9_relation","9_sex","9_age","9_educ","9_work","9_marstat","9_livstat","9_livwhere","9_meet","9_tele","10_relation","10_sex","10_age","10_educ","10_work","10_marstat","10_livstat","10_livwhere","10_meet","10_tele","11_relation","11_sex","11_age","11_educ","11_work","11_marstat","11_livstat","11_livwhere","11_meet","11_tele","12_relation","12_sex","12_age","12_educ","12_work","12_marstat","12_livstat","12_livwhere","12_meet","12_tele","13_relation","13_sex","13_age","13_edu","13_work","13marstat","13_livstat","13_livwhere","13_meet","13_tele","14_relation","14_sex","14_age","14_edu","14_work","14marstat","14_livstat","14_livwhere","14_meet","14_tele","15_relation","15_sex","15_age","15_edu","15_work","15marstat","15_livstat","15_livwhere","15_meet","15_tele","16_relation","16_sex","16_age","16_edu","16_work","16marstat","16_livstat","16_livwhere","16_meet","16_tele","17_relation","17_sex","17_age","17_edu","17_work","17marstat","17_livstat","17_livwhere","17_meet","17_tele","18_relation","18_sex","18_age","18_edu","18_work","18marstat","18_livstat","18_livwhere","18_meet","18_tele","19_relation","19_sex","19_age","19_edu","19_work","19marstat","19_livstat","19_livwhere","19_meet","19_tele","20_relation","20_sex","20_age","20_edu","20_work","20marstat","20_livstat","20_livwhere","20_meet","20_tele","21_relation","21_sex","21_age","21_edu","21_work","21marstat","21_livstat","21_livwhere","21_meet","21_tele","22_relation","22_sex","22_age","22_edu","22_work","22marstat","22_livstat","22_livwhere","22_meet","22_tele")
+
+fam_dt_03y<- setNames(fam_dt_03y, fam_03y)
+# family members done here
 
 ```
 
