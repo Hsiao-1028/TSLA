@@ -16,6 +16,7 @@ library("dplyr")
 library("stringr")
 library("ggplot2")
 library("tidyr")
+library("tibble")
 ```
 
 ```{r}
@@ -25,11 +26,131 @@ load("/Users/Ano/Desktop/HRS_Chao/data_merge.RData")
 ```
 
 ```{r}
-# first we use data from 2007 to learn the package "melt" and "reshape"
+# first we use data from 2003 to learn the package "melt" and "reshape"
+# the taking demo, adls, diseases from the data set 
+library("data.table")
+dt_03y <- data.table(df_c_03_YOUTH)
+dt_03y <- dt_03y[, "survey_year":=2003]
+# dt_03y <- dt_03y[,"rwstat":= NA]
+# dt_03y <- dt_03y[,"worktype":= NA]
+# dt_03y <- dt_03y[,"reduc":= NA]
+# dt_03y <- dt_03y[,"rethnicty":= NA]
+dt_03y <- dt_03y[,c("crt1","crt2"):= NA]
+#dt_03y <- dt_03y[,c("othpres"):= NA]
 
-df_03y <- as.data.table(df_c_03_YOUTH)
+demo_03y <-c("qtype","ser_no","survey_year","sex","c56","c57","crt1","crt2","type","area","a2","a5","a13","b1","b22","c1","e1","e2a","c12b","c12c","c26","c27","c28","c29")
+
+# b15 -- ntothh ( omit partners and children), I encode b22 to includ all members living in this house
+# c12c 從住院主因變成了最近一次住院是為什麼
+# c26 cursomke ** 以前沒有的但我覺得蠻重要 99 96好像也有 可以考慮放
+# c29 cursport ** 可考慮要不要放
+# 有身高體重
+
+which(colnames(dt_03y) =="c12b")
+demo_dt_03y <- dt_03y[,c("qtype","ser_no","survey_year","sex","c56","c57","crt1","crt2","type","area","a2","a5","a13","b1","b22","c1","e1","e2a","c12b","c12c","c26","c27","c28","c29"),]
+#ntothh exclude parners and childrens
+# e6 is the work type
+# 有身高體重了
+
+demo_03y<- c("qtype","ser_no","survey_year","rsex","height","weight","crt1","crt2","dwell1","dwell2","reduc","ethnicty","marstat","nchldrn","ntothh","hlgenrat","rwstat","worktype","nomihosp","hosphp1","cursmoke","curdrink","curchew","frqsport")
+demo_dt_03y<- setNames(demo_dt_03y, demo_03y)
+#demo_dt_99 <- add_column(demo_dt_99,rage = NA , .after = "rsex" )
+#-------------
+
+#adls
 
 
+phy_dt_03y <- dt_03y[,c("c231","c233","c234","c235","c236","c237","c239"),]
+
+
+which(colnames(dt_03y) =="c246")
+# phys like 站立15分鐘, 屈蹲, 雙手高舉到頭上, 扭轉東西, 拿重物, 跑步, 走兩三樓
+phys_03y <- c("stand_15","crouch","hands_on_head","twist","carry_heavy","run","staris")
+iadl_dt_03y <- dt_03y[,c("c241","c242","c243","c244","c245","c246","c24b","c24c"), ]
+iadl_dt_03y <- add_column(iadl_dt_03y,dt_03y$c238, .after = "c243" )
+iadl_03y <- c("grocery","financial","transport","walk200","heavywork","housework","telehphone","iadl_receive_help","iadl_who_help")
+
+
+adls_dt_03y <- dt_03y[,c("c251","c252","c253","c254","c255","c256", "c25e")]
+adls_03y <- c("bath","clothes","dine","wakeup","walk_indoor","WC","adl_who_help")
+# general of ADLS is missing
+
+names<- append(phys_03y,adls_03y)
+names <- append(names,iadl_03y)
+adls_dt_03y <- cbind(phy_dt_03y, adls_dt_03y, iadl_dt_03y)
+adls_dt_03y<- setNames(adls_dt_03y, names)
+
+#----------
+# diseases 
+
+#which(colnames(dt_96_y) =="f05c41"
+dis_dt_03y <- dt_03y[,c("c3c1","c3c2","c3c3","c3b4","c3c5","c3c6","c3c7","c3c8","c3c9","c3_10","c3c11","c3c12","c3c13","c3c14","c3c15"),]
+dis_03y <- c("hibp","diab","hrtpr","strok","cancer","broh","arth","ulcer","livpr","hipbone","catar","kiddi","gout","spur","osteo")
+dis_dt_03y<- setNames(dis_dt_03y, dis_03y)
+# 少了一些症狀，但是多問了跌倒狀況
+# 跌倒狀況有包含有沒有頭部、頸部、脊椎骨折...
+# 您“現在”還有這種病症嗎？
+
+
+# spur = 骨刺(bone spur)
+# arth = 關節炎(arthritis)
+# catar = 白內障(cataract)
+# glau = 青光眼(glaucoma)
+# oteye = 其他眼疾
+# asth = 氣喘(asthma)
+# hibp = 高血壓(high blood pressure)
+# hrtpr = 心臟問題( heart trouble)
+# strok = 中風(stroke)
+# cirpr = 血液循環不良(circulation problem)
+# diab = 糖尿病(diabetes)
+# thydi = 甲狀腺疾病(thyroid disease)
+# hibc = 血油質高 (high blood ??)
+# anem = 貧血(anemia)
+# livpr = 肝膽疾病(liver, gallbladder)
+# const = 便秘與痔瘡(constipation)
+# ulcer = 胃潰瘍(ulcer)
+# kiddi = 腎臟疾病(kidney)
+# prost = 前列腺疾病(prostate)
+# oturi = 其他泌尿科問題( other urine)
+# skdis = 皮膚疾病( skin disease)
+# neur = 腦神經問題(neuro)
+# dizz = 暈眩(dizz)
+# faint = 昏倒(faint)
+# buzz = 耳鳴(buzz)
+# brokbone = 骨折(broken bone)
+
+#*belows are missing in 89
+# cancer = 癌症(cancer) 
+# broh = 支氣管炎(bronchitis) # !!replaceasth to broh
+# tbc = 肺結核(tuberculosis)
+# gout = 痛風(.)
+# hipbone = 髖骨骨折( broken hipbone) ##老人嚴重死因之一
+# headspine = 頭與脊椎外傷
+
+#* New in 2003 
+# osteo = osteoporosis 骨質疏鬆
+
+
+dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y)
+
+# added : iadl_receive_help, iadl_who_help, adls_who_help
+dt_03y[, iadl_who_help := ifelse( dt_03y$iadl_receive_help ==0, 0, iadl_who_help)] 
+# who_help =0 if nobody helps him/ her
+dt_03y [, iadl_receive_help := NULL, ]
 
 
 ```
+
+
+```{r}
+# Now is their family members 
+
+```
+
+
+
+
+
+
+
+
