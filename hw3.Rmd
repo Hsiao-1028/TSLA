@@ -132,6 +132,7 @@ dis_dt_03y<- setNames(dis_dt_03y, dis_03y)
 ```
 
 ```{r}
+# can not merge here, otherwise the datatable will be rewrite
 
 dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y)
 
