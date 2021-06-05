@@ -6,6 +6,29 @@ output: html_document
 ---
 
 ```{r}
+# packages 
+
+library("data.table") 
+library("magrittr")
+library("naniar")
+library("plyr")
+library("dplyr")
+library("stringr")
+library("ggplot2")
+library("tidyr")
+```
+
+```{r}
+# import data 
+load("/Users/Ano/Desktop/HRS_Chao/data_merge.RData")
+
+```
+
+```{r}
+# first we use data from 2007 to learn the package "melt" and "reshape"
+
+df_03y <- as.data.table(df_c_03_YOUTH)
+
 
 
 
