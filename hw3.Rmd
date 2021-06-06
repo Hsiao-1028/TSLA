@@ -131,22 +131,10 @@ dis_dt_03y<- setNames(dis_dt_03y, dis_03y)
 # osteo = osteoporosis 骨質疏鬆
 ```
 
-```{r}
-# can not merge here, otherwise the datatable will be rewrite
-
-dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y)
-
-# added : iadl_receive_help, iadl_who_help, adls_who_help
-dt_03y[, iadl_who_help := ifelse( dt_03y$iadl_receive_help ==0, 0, iadl_who_help)] 
-# who_help =0 if nobody helps him/ her
-dt_03y [, iadl_receive_help := NULL, ]
-
-
-```
-
 
 ```{r}
 # Now is their family members 
+# Worker's intelligent 
 dt_03y <- dt_03y[, "1_livstat":=0] #living status =0 : living together
 dt_03y <- dt_03y[, "1_livwhere":=0] #living status =0 : living together
 dt_03y <- dt_03y[, "1_meet":=0] #living status =0 : living together
@@ -235,6 +223,63 @@ fam_dt_03y<- setNames(fam_dt_03y, fam_03y)
 ```
 
 
+```{r}
+# merge for the final dataset 
+dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y,fam_dt_03y)
+
+# added : iadl_receive_help, iadl_who_help, adls_who_help
+dt_03y[, iadl_who_help := ifelse( dt_03y$iadl_receive_help ==0, 0, iadl_who_help)] 
+# who_help =0 if nobody helps him/ her
+dt_03y [, iadl_receive_help := NULL, ]
+
+```
+
+```{r}
+library(reshape)
+# Now I subset part of the data to learn how to use "reshape" and "melt"
+
+test <- dt_03y[1:10,c("ser_no","adl_who_help","1_relation","1_sex","1_age","1_educ","1_work","1_marstat","1_livstat","1_livwhere","1_meet","1_tele","2_relation","2_sex","2_age","2_educ","2_work","2_marstat","2_livstat","2_livwhere","2_meet","2_tele","3_relation","3_sex","3_age","3_educ","3_work","3_marstat","3_livstat","3_livwhere","3_meet","3_tele","4_relation","4_sex","4_age","4_educ","4_work","4_marstat","4_livstat","4_livwhere","4_meet","4_tele","5_relation","5_sex","5_age","5_educ","5_work","5_marstat","5_livstat","5_livwhere","5_meet","5_tele","6_relation","6_sex","6_age","6_educ","6_work","6_marstat","6_livstat","6_livwhere","6_meet","6_tele","7_relation","7_sex","7_age","7_educ","7_work","7_marstat","7_livstat","7_livwhere","7_meet","7_tele","8_relation","8_sex","8_age","8_educ","8_work","8_marstat","8_livstat","8_livwhere","8_meet","8_tele","9_relation","9_sex","9_age","9_educ","9_work","9_marstat","9_livstat","9_livwhere","9_meet","9_tele","10_relation","10_sex","10_age","10_educ","10_work","10_marstat","10_livstat","10_livwhere","10_meet","10_tele","11_relation","11_sex","11_age","11_educ","11_work","11_marstat","11_livstat","11_livwhere","11_meet","11_tele","12_relation","12_sex","12_age","12_educ","12_work","12_marstat","12_livstat","12_livwhere","12_meet","12_tele","13_relation","13_sex","13_age","13_edu","13_work","13marstat","13_livstat","13_livwhere","13_meet","13_tele","14_relation","14_sex","14_age","14_edu","14_work","14marstat","14_livstat","14_livwhere","14_meet","14_tele","15_relation","15_sex","15_age","15_edu","15_work","15marstat","15_livstat","15_livwhere","15_meet","15_tele","16_relation","16_sex","16_age","16_edu","16_work","16marstat","16_livstat","16_livwhere","16_meet","16_tele","17_relation","17_sex","17_age","17_edu","17_work","17marstat","17_livstat","17_livwhere","17_meet","17_tele","18_relation","18_sex","18_age","18_edu","18_work","18marstat","18_livstat","18_livwhere","18_meet","18_tele","19_relation","19_sex","19_age","19_edu","19_work","19marstat","19_livstat","19_livwhere","19_meet","19_tele","20_relation","20_sex","20_age","20_edu","20_work","20marstat","20_livstat","20_livwhere","20_meet","20_tele","21_relation","21_sex","21_age","21_edu","21_work","21marstat","21_livstat","21_livwhere","21_meet","21_tele","22_relation","22_sex","22_age","22_edu","22_work","22marstat","22_livstat","22_livwhere","22_meet","22_tele"),]
+
+test_reshape <- melt(test, id=c("ser_no","adl_who_help"), na.rm= FALSE)
+
+```
+
+
+```{r}
+# Reshape example : 
+# ref: http://dwoll.de/rexrepos/posts/dfReshape.html
+
+Nj   <- 4
+id   <- 1:Nj
+t_11 <- round(rnorm(Nj,  8, 2), 2)
+t_21 <- round(rnorm(Nj, 13, 2), 2)
+t_31 <- round(rnorm(Nj, 13, 2), 2)
+t_12 <- round(rnorm(Nj, 10, 2), 2)
+t_22 <- round(rnorm(Nj, 15, 2), 2)
+t_32 <- round(rnorm(Nj, 15, 2), 2)
+dfW  <- data.frame(id, t_11, t_21, t_31, t_12, t_22, t_32)
+
+# wide to long
+dfL1 <- reshape(dfW, varying=list(c("t_11", "t_21", "t_31"),
+                                   c("t_12", "t_22", "t_32")),
+                 direction="long", timevar="IV1", idvar="id",
+                 v.names=c("IV2-1", "IV2-2"))
+
+dfL2 <- reshape(dfL1, varying=c("IV2-1", "IV2-2"),
+                direction="long", timevar="IV2",
+                idvar=c("id", "IV1"), v.names="DV")
+head(dfL2)
+
+
+# long to wide
+dfW1 <- reshape(dfL2, v.names="DV", timevar="IV1",
+                idvar=c("id", "IV2"), direction="wide")
+
+dfW2 <- reshape(dfW1, v.names=c("DV.1", "DV.2", "DV.3"),
+                timevar="IV2", idvar="id", direction="wide")
+
+all.equal(dfW, dfW2, check.attributes=FALSE)
+```
 
 
 
