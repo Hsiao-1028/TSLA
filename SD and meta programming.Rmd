@@ -1,0 +1,19 @@
+---
+title: ".SD and meta programming"
+author: "Hsiao"
+date: "6/6/2021"
+output: html_document
+---
+
+```{r}
+# learning progress 
+# use packages
+
+```
+
+```{r}
+
+
+
+
+```
