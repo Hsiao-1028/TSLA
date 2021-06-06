@@ -8,7 +8,6 @@ output: html_document
 ```{r}
 # learning progress 
 # use packages
-
 library("data.table")
 ```
 ---
@@ -16,9 +15,11 @@ library("data.table")
 .SD refers to the subset of the data.table for each group, excluding all columns used in by.
 .SD along with lapply can be used to apply any function to multiple columns by group in a data.table
 
+
+---
+
 ```{r}
 mtcars = data.table(mtcars) # Let's not include rownames to keep things simpler
-
 test<- mtcars[ , lapply(.SD, summary), by = .(cyl,vs)]
 # by =.(a,b) <=>  by = c("A", "B")
 # take means to other variables exclude the cyl
@@ -40,6 +41,11 @@ test2<- mtcars[order(gear, cyl), lapply(.SD, mean), by = .(gear, cyl), .SDcols =
 
 # not specifying any type -> omit using by 
 test3<- mtcars[ , lapply(.SD, mean), .SDcols = cols_chosen] 
+
+test4<- mtcars[ , .SD[ , paste(vs, am, gear , sep="", collapse="_")], by=cyl, .SDcols = c("vs","am")]
+
+
+test5<- mtcars[, "m_id":= paste(vs, am, gear, sep="", collapse = "_"),]
 
 ```
 
