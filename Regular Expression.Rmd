@@ -1,0 +1,90 @@
+---
+title: "Regular_expression"
+author: "Hsiao"
+date: "6/10/2021"
+output: html_document
+---
+
+```{r}
+#packages :
+
+library("data.table")
+library(magrittr)
+# %>% --> and then ..
+
+
+```
+
+
+```{r}
+# grepl
+mtcars = data.table(mtcars)
+
+
+x<-function(x)
+
+```
+
+
+```{r}
+eq = function(x){2*x/(x+250) }
+eq2= function(x){ 1000*((x)**(-0.003)/ -(x+500)) +2 }
+eq3= function(x){ 2*(x/2500)**(1/25) }
+# eq = function(x)
+plot(eq(1:2500), type='l')
+plot(eq2(1:2500), type='l')
+
+plot(eq3(1:2500), type='l')
+
+```
+
+
+```{r}
+# subsetting
+x <- c("m", "f", "u", "f", "f", "m", "m")
+lookup <- c(m = "Male", f = "Female", u = NA)
+lookup[x]
+str(lookup)
+x_option <- function(x) {
+  if (x == "a") {
+    "option 1"
+  } else if (x == "b") {
+    "option 2" 
+  } else if (x == "c") {
+    "option 3"
+  } else {
+    stop("Invalid `x` value")
+  }
+}
+
+x_option("z")
+
+z<- ifelse(TRUE, 1, "no")
+str(z)
+```
+
+```{r}
+means <- c(1, 50, 20)
+out <- vector("list", length(means))
+for (i in 1:length(means)) {
+  out[[i]] <- rnorm(10, means[[i]])
+}
+f2 <- function(a, b) {
+  a * 10
+}
+f2(10, stop("This is an error!"))
+
+
+x <- 10
+g01 <- function() {
+  x <- 20
+  x
+}
+
+g01()
+```
+
+---
+reference
+https://datascienceandr.org/articles/RegularExpression.html
+
