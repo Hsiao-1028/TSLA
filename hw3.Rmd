@@ -277,18 +277,29 @@ for(i in 1:9){
 setnames(dt_03y, paste0("b", 16:21, 10), paste0(22, status))
 
 
-
-
 # 取出
+
+status2 <- c("_relation", "_sex", "_age", "_edu", "_work", "_marstat", "_livstat", "_livwhere", "_meet","_tele")
+
+sapply()
+paste0(1:22, status2)
 
 cols <- do.call(paste0, expand.grid(1:22, status2))
 # 可能要用regex 做ordering
 # another approach 
 # 用外積做
+
 cols<- outer(1:22,status2, FUN = "paste0")
 cols<- t(cols) # 做一個transpose
 dim(cols) <- NULL # 降維
 print(cols)
+
+
+for(i in 1:5){ x<-paste0(i, status2)}
+
+# 回傳東西會很麻煩
+# lapply, 才會回傳東西給我 （憑鐔運算比較喎）
+# 
 
 
 fam_dt_03y <- dt_03y[, .SD , .SDcol = cols]
