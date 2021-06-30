@@ -1,0 +1,421 @@
+---
+title: "1996_family_member"
+author: "Hsiao"
+date: "6/27/2021"
+output: html_document
+---
+
+```{r}
+# packages 
+library("data.table") 
+library("magrittr")
+library("naniar")
+library("plyr")
+library("dplyr")
+library("stringr")
+library("ggplot2")
+library("tidyr")
+library("tibble")
+```
+
+
+```{r}
+# import data 
+load("/Users/Ano/Desktop/HRS_Chao/data_merge.RData")
+
+```
+
+```{r}
+# 1996
+# Turn into data.table and add years
+# *** observe that the survey for elder( started in 1989) use qtypeB, 
+# while younger(add in 1996) use type A
+dt_96_y <- data.table(df_c_96_YOUTH)
+dt_96_y <- dt_96_y[, "survey_year":=1996]
+dt_96_o <- data.table(df_c_96_ELDER)
+dt_96_o <- dt_96_o[, "survey_year":=1996]
+dt_96_o <- dt_96_o[,"reduc" := NA]
+dt_96_o <- dt_96_o[,"ethnicty" := NA]
+
+summary(dt_96_y$f0104)
+
+# old : 
+# Demo
+
+demo_96_o <-c("qtype","ser_no","survey_year","f0103","f0104","prt1","crt2","f0101","f0102","reduc","ethnicty","f02a3","f04b1","f04b15","f05c1","f11e1","f06c9b","f06c9c","f08c211","f08c221")
+demo_dt_96_o <- dt_96_o[,c("qtype","ser_no","survey_year","f0103","f0104","crt1","crt2","f0101","f0102","reduc","ethnicty","f02a3","f04b1","f04b15","f05c1","f11e1","f06c9b","f06c9c","f08c201","f08c211","f08c221","f08c23a"),]
+
+
+demo_dt_96_o<- setNames(demo_dt_96_o, c("qtype","ser_no","survey_year","rsex","rage","crt1","crt2","dwell1","dwell2","reduc","ethnicty","marstat","nchldrn","ntothh","hlgenrat","rwstat","nomihosp","hosphp1","cursmoke","curdrink","curchew","frqsport"))
+
+# 103 as rsex
+# 104 as rage
+# 101 as dwell
+# 102 as dwell2 : 都市、鎮上鄉間的街上、鄉村
+# lack of reduc -> fill with NAs
+# lack of ethnicity -> fill with NAs
+# f02a3 marstat now
+# f04b1 nchldrn
+# f04b15 ntothh
+# f05c1 hlgenrat
+# f11e1 rwstat
+# f16k1 othpres
+# f06c9b nomihosp in days
+# f06c9c hosphp1
+# f08c211 curdrink
+# f08c221 curchew
+
+# omit rhead, height, weight, rlastocc(?),
+
+# f08c201 smoke
+# f08c23a sport
+# congntive ??? 
+
+#--------------------
+# Adls
+phy_dt_96_o <- dt_96_o[,309:315,]
+# phys like 站立15分鐘, 屈蹲, 雙手高舉到頭上, 扭轉東西, 拿重物, 跑步, 走兩三樓
+
+adls_dt_96_o <- dt_96_o[,c("f07c17", "f07c181a","f07c182a","f07c183a","f07c184a","f07c185a","f07c186a")]
+# f07c17 general need help 3most serious
+# 181 bath
+# 182 clothes
+# 183 dine
+# 184 wake up 
+# 185 walk inside
+# 186 WC
+hadls<- c("bath","clothes","dine","wakeup","walkinside","WC")
+setnames(dt_96_o, c(paste0("f07c18",1:6,"e")), c(paste0("who_help",hadls)))
+
+cols<- grep("^who_help", names(dt_96_o))
+help_adls <- dt_96_o[, .SD, .SDcols=cols ]
+
+
+iadl_dt_96_o <- dt_96_o[,348:354, ]
+adls_dt_96_o <- cbind(phy_dt_96_o, adls_dt_96_o, iadl_dt_96_o)
+
+phys_96 <- c("stand_15","crouch","hands_on_head","twist","carry_heavy","run","staris")
+adls_96 <- c("general","bath","clothes","dine","wakeup","walk_indoor","WC")
+iadl_96 <- c("grocery","financial","transport","walk200","heavywork","housework","telehphone")
+names<- append(phys_96,adls_96)
+names <- append(names,iadl_96)
+adls_dt_96_o<- setNames(adls_dt_96_o, names)
+adls_dt_96_o <- cbind(adls_dt_96_o, help_adls)
+# diseases
+
+dis_dt_96_o <- dt_96_o[,c("f05c41","f05c42","f05c43","f05c44","f05c45","f05c46","f05c47", "f05c48","f05c49","f06c5a","f06c5b","f06c5c","f06c5d","f06c5e","f06c5f","f06c5g","f06c5h","f06c5i","f06c5j","f06c5k"),]
+
+#dis_dt_96_o<- rename(dis_dt_96_o, c("f05c41" = "hibp", "f05c42"="diab","f05c43"="hrtpr", "f05c44"="strok", "f05c45"="cancer","f05c46"="broh","f05c47"="arth","f05c48"="ulcer","f05c49"="livpr","f06c5a"="catar","f06c5b"="glau","f06c5c"="tbc","f06c5d"="kiddi","f06c5e"="gout","f06c5f"="anem","f06c5g"="spur","f06c5h"="hipbone","f06c5i"="brokenbone","f06c5j"="headspine","f06c5k"="prost"))
+
+dis_96 <- c("hibp","diab","hrtpr","strok","cancer","broh","arth","ulcer","livpr","catar","glau","tbc","kiddi","gout","anem","spur","hipbone","brokenbone","headspine","prost")
+dis_dt_96_o<- setNames(dis_dt_96_o, dis_96)
+
+# spur = 骨刺(bone spur)
+# arth = 關節炎(arthritis)
+# catar = 白內障(cataract)
+# glau = 青光眼(glaucoma)
+# oteye = 其他眼疾
+# asth = 氣喘(asthma)
+# hibp = 高血壓(high blood pressure)
+# hrtpr = 心臟問題( heart trouble)
+# strok = 中風(stroke)
+# cirpr = 血液循環不良(circulation problem)
+# diab = 糖尿病(diabetes)
+# thydi = 甲狀腺疾病(thyroid disease)
+# hibc = 血油質高 (high blood ??)
+# anem = 貧血(anemia)
+# livpr = 肝膽疾病(liver, gallbladder)
+# const = 便秘與痔瘡(constipation)
+# ulcer = 胃潰瘍(ulcer)
+# kiddi = 腎臟疾病(kidney)
+# prost = 前列腺疾病(prostate)
+# oturi = 其他泌尿科問題( other urine)
+# skdis = 皮膚疾病( skin disease)
+# neur = 腦神經問題(neuro)
+# dizz = 暈眩(dizz)
+# faint = 昏倒(faint)
+# buzz = 耳鳴(buzz)
+# brokbone = 骨折(broken bone)
+
+#*belows are missing in 89
+# cancer = 癌症(cancer) 
+# broh = 支氣管炎(bronchitis) # !!replaceasth to broh
+# tbc = 肺結核(tuberculosis)
+# gout = 痛風(.)
+# hipbone = 髖骨骨折( broken hipbone) ##老人嚴重死因之一
+# headspine = 頭與脊椎外傷
+
+
+# dt_96_o <- cbind(demo_dt_96_o,adls_dt_96_o,dis_dt_96_o)
+# dt_96_o <- dt_96_o[,"birthyear" := survey_year - rage]
+# head(dt_96_o)
+# 
+# 
+# ans <- dt_96_o[ser_no<=100,, by = .(twist)]
+# ans
+```
+
+
+```{r}          
+library(tibble)
+library(dplyr)
+# View(dt_96_y)
+
+#Demo_96_y:
+demo_96_y <- c("qtype","ser_no","survey_year","f0103","crt1","crt2","f0101","f0102","f02a2","f02a5","f02a10","f04b1","f04b4","f05c3","f11e1","f11e2b","f06c9b","f06c9c","f08c201","f08c21","f08c22")
+
+demo_dt_96_y <- dt_96_y[,c("qtype","ser_no","survey_year","f0103","crt1","crt2","f0101","f0102","f02a2","f02a5","f02a10","f04b1","f04b4","f05c3","f11e1","f06c9b","f06c9c","f08c201","f08c21","f08c22","f08c23"),]
+
+
+demo_dt_96_y<- setNames(demo_dt_96_y, c("qtype","ser_no","survey_year","rsex","crt1","crt2","dwell1","dwell2","reduc","ethnicty","marstat","nchldrn","ntothh","hlgenrat","rwstat","nomihosp","hosphp1","cursmoke","curdrink","curchew","frqsport"))
+
+demo_dt_96_y <- add_column(demo_dt_96_y,rage = NA , .after = "rsex" )
+ 
+
+## denote : 
+# * as missing in 1989
+
+# f0101: dwell1
+# f0102 : dwell2 : 都市、鎮湘、鄉村農村
+# f0103 as sex : 1male
+# f0104 : brith year -> cal age ** missing
+# f02a2: reduc
+# f02a5: ethnicty
+# f02a10: marstat
+# f04b1: nlchldrn
+# f04b4: ntothh
+# f05c3: hlgenrat
+# f11e1: rwkstat *** index 有變！！！
+# f11e2b: rlastocc : 變成現在工作的行業 ***** 要不要放？
+# f06c9b: nomihosp : 變成幾天
+# f06c9c: homsphp1 ： index可能有變
+# f08c21: curdrink
+# f08c22: curchew
+
+# f02a6 : faith 0沒有 道教 佛教 一貫道 基督教 天主教 *
+# f20k1: othpres
+# f08c201: 抽煙 *
+# f08c21: curdrink
+# f08c22: curchew
+# f08c23 : 平常有沒有在運動 0沒有 3每週六次以上 *
+
+#---------
+# adls 
+
+phy_dt_96_y <- dt_96_y[,290:296]
+
+which(colnames(dt_96_y) =="f07c161")
+# phys like 站立15分鐘, 屈蹲, 雙手高舉到頭上, 扭轉東西, 拿重物, 跑步, 走兩三樓
+phys_96 <- c("stand_15","crouch","hands_on_head","twist","carry_heavy","run","staris")
+
+adls_dt_96_y <- dt_96_y[,c("f07c17", "f07c181a","f07c182a","f07c183a","f07c184a","f07c185a","f07c186a")]
+adls_96 <- c("general","bath","clothes","dine","wakeup","walk_indoor","WC")
+# f07c17 general need help 3most serious
+# 181 bath
+# 182 clothes
+# 183 dine
+# 184 wake up 
+# 185 walk inside
+# 186 WC
+
+hadls<- c("bath","clothes","dine","wakeup","walkinside","WC")
+setnames(dt_96_y, c(paste0("f07c18",1:6,"e")), c(paste0("who_help",hadls)))
+
+cols<- grep("^who_help", names(dt_96_y))
+help_adls <- dt_96_y[, .SD, .SDcols=cols ]
+
+iadl_dt_96_y <- dt_96_y[,329:335, ]
+which(colnames(dt_96_y) =="f07c197")
+# need data for get help ???
+
+adls_dt_96_y <- cbind(phy_dt_96_y, adls_dt_96_y, iadl_dt_96_y)
+adls_dt_96_y<- setNames(adls_dt_96_y, names)
+adls_dt_96_y <- cbind(adls_dt_96_y, help_adls)
+#----------
+#disease 
+which(colnames(dt_96_y) =="f05c41")
+dis_dt_96_y <- dt_96_y[,c("f05c41","f05c42","f05c43","f05c44","f05c45","f05c46","f05c47", "f05c48","f05c49","f06c5a","f06c5b","f06c5c","f06c5d","f06c5e","f06c5f","f06c5g","f06c5h","f06c5i","f06c5j"),]
+dis_96 <- c("hibp","diab","hrtpr","strok","cancer","broh","arth","ulcer","livpr","catar","glau","tbc","kiddi","gout","anem","spur","hipbone","brokenbone","headspine")
+# 沒有問攝護腺問題 #prost
+dis_dt_96_y<- setNames(dis_dt_96_y, dis_96)
+# 
+```
+
+```{r}
+# fam 96y
+# Now is their family members
+#for(i in 1:5){
+# setnames(dt_96y, paste0( "b", seq(from=50 ,to =100, by=10), i), paste0(i ,status))
+# }
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b510", i), paste0(i ,"_relation"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b60", i), paste0(i ,"_gender"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b70", i), paste0(i ,"_age"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b80", i), paste0(i ,"_edu"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b90", i), paste0(i ,"_work"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b100", i), paste0(i ,"_marstat"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b110", i), paste0(i ,"_livstat"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b120", i), paste0(i ,"_livwhere"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b130", i), paste0(i ,"_meet"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f21b140", i), paste0(i ,"_tele"))}
+
+# 10 is change
+status<- c("_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+setnames(dt_96_y, "f21b5110", "10_relation")
+setnames(dt_96_y, paste0( "f21b", 6:14 ,"10"), paste0("10" , status))
+
+#11~19 f22...
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b51", i), paste0(i ,"_relation"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b6", i), paste0(i ,"_gender"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b7", i), paste0(i ,"_age"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b8", i), paste0(i ,"_edu"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b9", i), paste0(i ,"_work"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b10", i), paste0(i ,"_marstat"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b11", i), paste0(i ,"_livstat"))}
+for(i in 11:20){ setnames(dt_96_y, paste0("f22b12", i), paste0(i ,"_livwhere"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b13", i), paste0(i ,"_meet"))}
+for(i in 11:20){setnames(dt_96_y, paste0( "f22b14", i), paste0(i ,"_tele"))}
+
+#不同住子女
+# f23b1910_ are missing in the original dataset, key determinate for analysis...
+# typo might be f23b19101 -> fb19101
+for(i in 1:9){setnames(dt_96_y, paste0( "fb1910", i), paste0(i+20 ,"_relation"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b200", i), paste0(i+20 ,"_gender"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b210", i), paste0(i+20 ,"_age"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b220", i), paste0(i+20 ,"_edu"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b230", i), paste0(i+20 ,"_work"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b240", i), paste0(i+20 ,"_marstat"))}
+dt_96_y[, paste0(21:29,"_livstat") := 0, ]
+# dt_96_y[, .SD :=0, .SDcols = paste0(21:29,"_livstat" )]
+# for(i in 1:9){setnames(dt_96_y, paste0( "f23b250", i), paste0(i+20 ,"_livstat"))}
+for(i in 1:9){ setnames(dt_96_y, paste0("f23b250", i), paste0(i+20 ,"_livwhere"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b260", i), paste0(i+20 ,"_meet"))}
+for(i in 1:9){setnames(dt_96_y, paste0( "f23b270", i), paste0(i+20 ,"_tele"))}
+# omit 2 ppl for 30 and 31
+
+
+# 用lapply重複操作grep，用regular expression 抓出特定的句子
+
+# cols<- c("1_relation", "1_meet")
+cols<- c(unlist( lapply(paste0("^", 1:29,"_"), function(x){grep(x, names(dt_96_y), value = T)})))
+class(cols)
+fam_96_y<- dt_96_y[, cols, with=FALSE]
+
+dt_96_y <- cbind(demo_dt_96_y, adls_dt_96_y, dis_dt_96_y, fam_96_y)
+dt_96_y <- dt_96_y[, "birthyear":= NA]
+# 父親、母親、公公、岳父、婆婆、岳母 有特別問，但我覺得好像都在這29個關係中有被登記過了。
+
+```
+
+
+```{r}
+# fam 96o
+
+
+# Now is their family members
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b510", i), paste0(i ,"_relation"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b60", i), paste0(i ,"_gender"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b70", i), paste0(i ,"_age"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b80", i), paste0(i ,"_edu"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b90", i), paste0(i ,"_work"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b100", i), paste0(i ,"_marstat"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b110", i), paste0(i ,"_livstat"))}
+for(i in 1:9){ setnames(dt_96_o, paste0( "f17b120", i), paste0(i ,"_livwhere"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b130", i), paste0(i ,"_meet"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f17b140", i), paste0(i ,"_tele"))}
+
+# 10 is change
+status<- c("_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+setnames(dt_96_o, "f17b5110", "10_relation")
+setnames(dt_96_o, paste0( "f17b", 6:14 ,"10"), paste0("10" , status))
+
+#11~19 f22...
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b51", i), paste0(i ,"_relation"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b6", i), paste0(i ,"_gender"))} #1male 2 female
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b7", i), paste0(i ,"_age"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b8", i), paste0(i ,"_edu"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b9", i), paste0(i ,"_work"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b10", i), paste0(i ,"_marstat"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b11", i), paste0(i ,"_livstat"))}
+for(i in 11:20){ setnames(dt_96_o, paste0("f18b12", i), paste0(i ,"_livwhere"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b13", i), paste0(i ,"_meet"))}
+for(i in 11:20){setnames(dt_96_o, paste0( "f18b14", i), paste0(i ,"_tele"))}
+
+#不同住子女
+# f23b1910_ are missing in the original dataset, key determinate for analysis...
+# typo might be f23b19101 -> fb20101
+for(i in 1:9){setnames(dt_96_o, paste0( "fb2010", i), paste0(i+20 ,"_relation"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b210", i), paste0(i+20 ,"_gender"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b220", i), paste0(i+20 ,"_age"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b230", i), paste0(i+20 ,"_edu"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b240", i), paste0(i+20 ,"_work"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b250", i), paste0(i+20 ,"_marstat"))}
+dt_96_o[, paste0(21:29,"_livstat") := 0, ]
+# dt_96_o[, .SD :=0, .SDcols = paste0(21:29,"_livstat" )]
+# for(i in 1:9){setnames(dt_96_o, paste0( "f23b250", i), paste0(i+20 ,"_livstat"))}
+for(i in 1:9){ setnames(dt_96_o, paste0("f19b260", i), paste0(i+20 ,"_livwhere"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b270", i), paste0(i+20 ,"_meet"))}
+for(i in 1:9){setnames(dt_96_o, paste0( "f19b280", i), paste0(i+20 ,"_tele"))}
+
+# 30 
+dt_96_o[, paste0(30:31,"_livstat") := 0, ]
+status<- c("_gender","_age","_edu","_work","_marstat","_livwhere","_meet","_tele")
+setnames(dt_96_o, "fb20110", "30_relation")
+setnames(dt_96_o, paste0( "f19b", 21:28 ,"10"), paste0("30" , status))
+#31
+status<- c("_gender","_age","_edu","_work","_marstat","_livwhere","_meet","_tele")
+setnames(dt_96_o, "fb20111", "31_relation")
+setnames(dt_96_o, paste0( "f20b", 21:28 ,"11"), paste0("31" , status))
+
+# 用lapply重複操作grep，用regular expression 抓出特定的句子
+
+# cols<- c("1_relation", "1_meet")
+cols<- c(unlist( lapply(paste0("^", 1:31,"_"), function(x){grep(x, names(dt_96_o), value = T)})))
+class(cols)
+fam_96_o<- dt_96_o[, cols, with=FALSE]
+
+dt_96_o <- cbind(demo_dt_96_o, adls_dt_96_o, dis_dt_96_o, fam_96_o)
+dt_96_o <- dt_96_o[, "birthyear":= NA]
+
+# 父親、母親、公公、岳父、婆婆、岳母 有特別問，但我覺得好像都在這29個關係中有被登記過了。
+```
+
+```{r}
+library(reshape)
+
+#first deal help ?? 重複??
+liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+
+cols<- unlist(lapply(1:31, function(x){paste0(x,liv)}))
+cols<- append(c("ser_no", "survey_year", "qtype", paste0("who_help", c("bath","clothes","dine","wakeup","walkinside","WC"))), cols)
+tt<- dt_96_o[, .SD, .SDcols=cols ] 
+
+x<- list( c(paste0(1:31, "_relation")), c(paste0(1:31, "_gender")), c(paste0(1:31, "_age")), c(paste0(1:31,"_edu")), c(paste0(1:31, "_work")), c(paste0(1:31, "_marstat")), c(paste0(1:31, "_livstat")), c(paste0(1:31, "_livwhere")), c(paste0(1:31, "_meet")), c(paste0(1:31, "_tele")))
+
+dt_96o_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype", paste0("who_help", c("bath","clothes","dine","wakeup","walkinside","WC"))) , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
+
+dt_96o_reshape <- as.data.table(dt_96o_reshape)
+dt_96o_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
+
+
+
+
+cols<- unlist(lapply(1:29, function(x){paste0(x,liv)}))
+cols<- append(c("ser_no", "survey_year", "qtype", paste0("who_help", c("bath","clothes","dine","wakeup","walkinside","WC"))), cols)
+tt<- dt_96_y[, .SD, .SDcols=cols ] 
+
+x<- list( c(paste0(1:29, "_relation")), c(paste0(1:29, "_gender")), c(paste0(1:29, "_age")), c(paste0(1:29,"_edu")), c(paste0(1:29, "_work")), c(paste0(1:29, "_marstat")), c(paste0(1:29, "_livstat")), c(paste0(1:29, "_livwhere")), c(paste0(1:29, "_meet")), c(paste0(1:29, "_tele")))
+
+dt_96y_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype", paste0("who_help", c("bath","clothes","dine","wakeup","walkinside","WC"))) , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
+
+dt_96y_reshape <- as.data.table(dt_96y_reshape)
+dt_96y_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
+
+
+```
+
+
+
+
+
+
+
