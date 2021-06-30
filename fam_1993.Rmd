@@ -1,0 +1,176 @@
+---
+title: "fam_1993"
+author: "Hsiao"
+date: "7/1/2021"
+output: html_document
+---
+
+```{r}
+
+library(data.table)
+
+data = load("/Users/Ano/Desktop/HRS_Chao/data_merge.RData")
+
+```
+
+```{r}
+library(data.table)
+# for year 1993
+# Codebook 沒標示清楚，難以繼續進行。決定最後再清
+dt_93 <- data.table(df_c_93)
+dt_93 <- dt_93[, "survey_year":= 1993]
+dt_93 <- dt_93[, "marstat":= NA] # 結婚狀況=出現在codebook 但沒有檔案= = 
+dt_93 <- dt_93[, "rsex":= NA]
+dt_93 <- dt_93[, "rage":= NA]
+dt_93 <- dt_93[, "dwell2":= NA]
+dt_93 <- dt_93[, "reduc":= NA]
+dt_93 <- dt_93[, "ethnicty":= NA]
+dt_93 <- dt_93[, "frqsport":= NA]
+dt_93<- dt_93[, "birthyear":=NA,]
+
+which(colnames(dt_93) =="A1")
+
+
+demo_dt_93 <- dt_93[,c("qtype","ser_no","survey_year","rsex","rage","crt1","crt2","dwell93","dwell2","reduc","ethnicty","marstat","b6child","b7","c53","curwork","c25b1","c25c1","c43","c44","c46","frqsport"),]
+
+#888 ==0
+
+demo_dt_93<- setNames(demo_dt_93, c("qtype","ser_no","survey_year","rsex","rage","crt1","crt2","dwell1","dwell2","reduc","ethnicty","marstat","nchldrn","ntothh","hlgenrat","rwstat","nomihosp","hosphp1","cursmoke","curdrink","curchew","frqsport"))
+#Demogrphy:
+
+#adls
+iadl_dt_93 <- dt_93[,c("c411","c412","c414","c415","c416","c417","c418"), ]
+adl_dt_93<-dt_93[, c("c419","c4110","c4111","c4112","c4113","c4114")]
+phy_dt_93 <- dt_93[, c("c421","c422","c423","c424","c425","c426","c413")]
+
+# need data for get help ???
+
+adls_dt_93<- cbind(phy_dt_93, adl_dt_93, iadl_dt_93)
+
+phys_93 <- c("stand_15","crouch","hands_on_head","twist","carry_heavy","run","staris")
+adls_93 <- c("bath","clothes","dine","wakeup","walk_indoor","WC")
+iadl_93 <- c("grocery","financial","transport","walk200","heavywork","housework","telehphone")
+names<- append(phys_93,adls_93)
+names <- append(names,iadl_93)
+adls_dt_93<- setNames(adls_dt_93, names)
+
+# diseases
+
+dt_93 <- dt_93[, "headspine":= NA]
+dt_93 <- dt_93[, "spur":= NA]
+dis_dt_93 <- dt_93[,c("c1","c2","c3","c4","c5","c6","c8", "c11_7a","c10","c11_1a","c11_2a","c11_11a","c11_8a","c11_10a","c11_5a","spur","c7b7","c7","c7b6","c11_13a"),]
+
+# c7 骨折
+# c9腰痛背痛
+
+
+dis_93 <- c("hibp","diab","hrtpr","strok","cancer","broh","arth","ulcer","livpr","catar","glau","tbc","kiddi","gout","anem","spur","hipbone","brokenbone","headspine","prost")
+dis_dt_93<- setNames(dis_dt_93, dis_93)
+
+# dt_93<- cbind(demo_dt_93,adls_dt_93,dis_dt_93)
+# head(dt_93)
+
+```
+
+
+```{r}
+#fam 
+
+
+# 同住者
+for(i in 2:9){setnames(dt_93, paste0( "relp0", i), paste0(i ,"_relation"))}
+for(i in 2:4){setnames(dt_93, paste0( "sexp0", i), paste0(i ,"_gender"))}
+for(i in 5:9){setnames(dt_93, paste0( "sexp0", i,"m"), paste0(i ,"_gender"))}
+for(i in 2:9){setnames(dt_93, paste0( "bx2p0", i), paste0(i ,"_age"))}
+for(i in 2:9){setnames(dt_93, paste0( "bx5p0", i), paste0(i ,"_edu"))}
+for(i in 2:9){setnames(dt_93, paste0( "bx61p0", i), paste0(i ,"_work"))}
+for(i in 2:9){setnames(dt_93, paste0( "bx3p0", i), paste0(i ,"_marstat"))}
+
+for(i in 10:16){setnames(dt_93, paste0( "relp", i), paste0(i ,"_relation"))}
+for(i in 10:16){setnames(dt_93, paste0( "sexp", i,"m"), paste0(i ,"_gender"))}
+for(i in 10:16){setnames(dt_93, paste0( "bx2p", i), paste0(i ,"_age"))}
+for(i in 10:16){setnames(dt_93, paste0( "bx5p", i), paste0(i ,"_edu"))}
+for(i in 10:16){setnames(dt_93, paste0( "bx61p", i), paste0(i ,"_work"))}
+for(i in 10:16){setnames(dt_93, paste0( "bx3p", i), paste0(i ,"_marstat"))}
+dt_93[, paste0(1:16, "_livstat"):= 0, ] #0 = 住在一起
+dt_93[, paste0(1:16, "_livwhere"):= 0, ] #0 = 住在一起
+dt_93[, paste0(1:16, "_meet"):= 0, ] #0 = 住在一起
+dt_93[, paste0(1:16, "_tele"):= 0, ] #0 = 住在一起
+
+
+# 子女
+for(i in 1:9){setnames(dt_93, paste0( "relq0", i), paste0(i+16 ,"_relation"))}
+for(i in 1:9){setnames(dt_93, paste0( "sexq0", i), paste0(i+16 ,"_gender"))}
+for(i in 1:9){setnames(dt_93, paste0( "by2q0", i), paste0(i+16 ,"_age"))}
+for(i in 1:9){setnames(dt_93, paste0( "by5q0", i), paste0(i+16 ,"_edu"))}
+for(i in 1:9){setnames(dt_93, paste0( "by61q0", i), paste0(i+16 ,"_work"))}
+for(i in 1:9){setnames(dt_93, paste0( "by3q0", i), paste0(i+16 ,"_marstat"))}
+
+for(i in 1:9){setnames(dt_93, paste0( "by7q0", i), paste0(i+16 ,"_livwhere"))}
+for(i in 1:9){setnames(dt_93, paste0( "by9q0", i), paste0(i+16 ,"_meet"))} #你去拜訪他 他去擺仿你是by11q0_
+for(i in 1:9){setnames(dt_93, paste0( "by12q0", i), paste0(i+16 ,"_tele"))}
+
+
+for(i in 10:15){setnames(dt_93, paste0( "relq", i), paste0(i+16 ,"_relation"))}
+for(i in 10:15){setnames(dt_93, paste0( "sexq", i), paste0(i+16 ,"_gender"))}
+for(i in 10:15){setnames(dt_93, paste0( "by2q", i), paste0(i+16 ,"_age"))}
+for(i in 10:15){setnames(dt_93, paste0( "by5q", i), paste0(i+16 ,"_edu"))}
+for(i in 10:15){setnames(dt_93, paste0( "by61q", i), paste0(i+16 ,"_work"))}
+for(i in 10:15){setnames(dt_93, paste0( "by3q", i), paste0(i+16 ,"_marstat"))}
+dt_93[, paste0(17:31, "_livstat"):= 88, ] #88 not recorded
+for(i in 10:15){setnames(dt_93, paste0( "by7q", i), paste0(i+16 ,"_livwhere"))}
+for(i in 10:15){setnames(dt_93, paste0( "by9q", i), paste0(i+16 ,"_meet"))} #你去拜訪他 他去擺仿你是by11q0_
+for(i in 10:15){setnames(dt_93, paste0( "by12q", i), paste0(i+16 ,"_tele"))}
+
+# 有一個是relr 但因為缺乏其他資訊，所以無法做
+# 執得提的是這邊有說是不是主要照顧者
+
+
+cols<- c(unlist( lapply(paste0("^", 1:31,"_"), function(x){grep(x, names(dt_93), value = T)})))
+class(cols)
+fam_93<- dt_93[, cols, with=FALSE ]
+dt_93 <- cbind(demo_dt_93, adls_dt_93, dis_dt_93, fam_93)
+
+```
+
+
+
+```{r}
+library(reshape)
+
+liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+
+cols<- unlist(lapply(2:31, function(x){paste0(x,liv)}))
+cols<- append(c("ser_no", "survey_year", "qtype"), cols)
+tt<- dt_93[, .SD, .SDcols=cols ] 
+
+x<- list( c(paste0(2:31, "_relation")), c(paste0(2:31, "_gender")), c(paste0(2:31, "_age")), c(paste0(2:31,"_edu")), c(paste0(2:31, "_work")), c(paste0(2:31, "_marstat")), c(paste0(2:31, "_livstat")), c(paste0(2:31, "_livwhere")), c(paste0(2:31, "_meet")), c(paste0(2:31, "_tele")))
+
+dt_93_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
+
+dt_93_reshape <- as.data.table(dt_93_reshape)
+dt_93_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
+
+# NAs 是有出現在codebook上，但沒有出現在dataset裡面的資料...
+```
+
+
+```{r}
+#m merge fam datas
+
+fam<- rbind(dt_93_reshape, dt_96o_reshape, dt_96y_reshape, dt_99_reshape, dt_03o_reshape, dt_03y_reshape, dt_07_reshape , fill =TRUE)
+
+write.table(fam, file = "fam_v1.csv", sep = ",")
+```
+
+```{r}
+
+cols<- grep("^C", fam$member_id, value=TRUE)
+cols
+test<- fam[fam$member_id %in% cols, ,  ]
+
+
+```
+
+
+

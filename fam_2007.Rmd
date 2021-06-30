@@ -1,0 +1,222 @@
+---
+title: "fam_2007"
+author: "Hsiao"
+date: "6/30/2021"
+output: html_document
+---
+
+```{r}
+library(data.table)
+data = load("/Users/Ano/Desktop/HRS_Chao/data_merge.RData")
+
+```
+
+
+```{r}
+# 2007
+# includes type A,B,C
+library("data.table")
+dt_07 <- data.table(df_c_07)
+dt_07 <- dt_07[, "survey_year":=2007]
+# dt_03y <- dt_03y[,"rwstat":= NA]
+# dt_03y <- dt_03y[,"worktype":= NA]
+dt_07 <- dt_07[,"reduc":= NA]
+dt_07 <- dt_07[,"ethnicty":= NA]
+dt_07 <- dt_07[,c("crt1","crt2"):= NA]
+#dt_03y <- dt_03y[,c("othpres"):= NA]
+
+
+sort(table(dt_07$c3_1))
+sort(table(dt_07$c3c_1))
+# missing value of current disease is because he did not have the histroy
+
+demo_07<-c("qtype","ser_no","survey_year","cvr1","c65","c66","crt1","crt2","cvr2","cvr5","reduc","ethnicty","a1_1","b1_1","b22","c1","e1_2","e6","c18b","c18c","c33","c34","c35","c36")
+
+# b15 -- ntothh ( omit partners and children), I encode b22 to includ all members living in this house
+# c12c 從住院主因變成了最近一次住院是為什麼
+# c26 cursomke ** 以前沒有的但我覺得蠻重要 99 96好像也有 可以考慮放
+# c29 cursport ** 可考慮要不要放
+# 有身高體重
+
+which(colnames(dt_07) =="crt1")
+demo_dt_07 <- dt_07[,c("qtype","ser_no","survey_year","cvr1","c65","c66","crt1","crt2","cvr4","cvr5","reduc","ethnicty","a1_1","b1_1","b22","c1","e1_2","e6","c18b","c18c","c33","c34","c35","c36"),]
+#ntothh exclude parners and childrens
+# e6 is the work type
+# 有身高體重了
+# e6 工作類型 e6a（沒放進去） 是行業分類
+
+demo_07<- c("qtype","ser_no","survey_year","rsex","height","weight","crt1","crt2","dwell1","dwell2","reduc","ethnicty","marstat","nchldrn","ntothh","hlgenrat","rwstat","worktype","nomihosp","hosphp1","cursmoke","curdrink","curchew","frqsport")
+demo_dt_07<- setNames(demo_dt_07, demo_07)
+#demo_dt_99 <- add_column(demo_dt_99,rage = NA , .after = "rsex" )
+#-------------
+
+#adls
+
+
+phy_dt_07 <- dt_07[,c("c14_2","c14_3","c14_4","c14_5","c14_6","c14_7","c14_9"),]
+
+
+which(colnames(dt_07) =="c15_6")
+# phys like 站立15分鐘, 屈蹲, 雙手高舉到頭上, 扭轉東西, 拿重物, 跑步, 走兩三樓
+phys_07 <- c("stand_15","crouch","hands_on_head","twist","carry_heavy","run","staris")
+iadl_dt_07 <- dt_07[,663:668, ]
+iadl_dt_07 <- add_column(iadl_dt_07,dt_07$c14_8, .after = "c15_3" )
+iadl_07 <- c("grocery","financial","transport","walk200","heavywork","housework","telehphone")
+
+
+adls_dt_07 <- dt_07[,c("c17_1","c17_2","c17_3","c17_4","c17_5","c17_6","c17e")]
+adls_07 <- c("bath","clothes","dine","wakeup","walk_indoor","WC","adl_who_help")
+
+
+
+# general of ADLS is missing
+
+names<- append(phys_07,adls_07)
+names <- append(names,iadl_07)
+adls_dt_07 <- cbind(phy_dt_07, adls_dt_07, iadl_dt_07)
+adls_dt_07<- setNames(adls_dt_07, names)
+
+#----------
+# diseases 
+
+#which(colnames(dt_96_y) =="f05c41"
+dis_dt_07 <- dt_07[,c("c3c_1","c3c_2","c3c_3","c3b_4","c3c_5","c3c_6","c3c_7","c3c_8","c3c_9","c3_10","c3c_11","c3c_12","c3c_13","c3c_14","c3c_15","c3c_16","c3c_17","c3c_18"),]
+dis_07 <- c("hibp","diab","hrtpr","strok","cancer","broh","arth","ulcer","livpr","hipbone","catar","kiddi","gout","spur","osteo","hibc","anem","prost")
+dis_dt_07<- setNames(dis_dt_07, dis_07)
+
+which(colnames(dt_07) =="c3c_1")
+# 多了高血脂, 貧血跟攝護腺問題
+# 您“現在”還有這種病症嗎？
+
+
+# spur = 骨刺(bone spur)
+# arth = 關節炎(arthritis)
+# catar = 白內障(cataract)
+# glau = 青光眼(glaucoma)
+# oteye = 其他眼疾
+# asth = 氣喘(asthma)
+# hibp = 高血壓(high blood pressure)
+# hrtpr = 心臟問題( heart trouble)
+# strok = 中風(stroke)
+# cirpr = 血液循環不良(circulation problem)
+# diab = 糖尿病(diabetes)
+# thydi = 甲狀腺疾病(thyroid disease)
+# hibc = 血油質高 (high blood ??)
+# anem = 貧血(anemia)
+# livpr = 肝膽疾病(liver, gallbladder)
+# const = 便秘與痔瘡(constipation)
+# ulcer = 胃潰瘍(ulcer)
+# kiddi = 腎臟疾病(kidney)
+# prost = 前列腺疾病(prostate)
+# oturi = 其他泌尿科問題( other urine)
+# skdis = 皮膚疾病( skin disease)
+# neur = 腦神經問題(neuro)
+# dizz = 暈眩(dizz)
+# faint = 昏倒(faint)
+# buzz = 耳鳴(buzz)
+# brokbone = 骨折(broken bone)
+
+#*belows are missing in 89
+# cancer = 癌症(cancer) 
+# broh = 支氣管炎(bronchitis) # !!replaceasth to broh
+# tbc = 肺結核(tuberculosis)
+# gout = 痛風(.)
+# hipbone = 髖骨骨折( broken hipbone) ##老人嚴重死因之一
+# headspine = 頭與脊椎外傷
+
+#* New in 2003 
+# osteo = osteoporosis 骨質疏鬆
+
+# dt_07 <- cbind(demo_dt_07, adls_dt_07, dis_dt_07)
+# summary(dt_07$dwell1)
+```
+
+
+
+```{r}
+# fam 
+# 沒抓到配偶喔！
+# original 6, 16,17, 30 appear in codebook but not data -> I omit them (not yet done)
+
+# 同住子女
+for(i in 1:6){setnames(dt_07, paste0( "b5_", i), paste0(i ,"_relation"))}
+for(i in 1:6){setnames(dt_07, paste0( "b6_", i), paste0(i ,"_gender"))}
+for(i in 1:6){setnames(dt_07, paste0( "b7_", i), paste0(i ,"_age"))}
+for(i in 1:6){setnames(dt_07, paste0( "b8_", i), paste0(i ,"_edu"))}
+for(i in 1:6){setnames(dt_07, paste0( "b9_", i), paste0(i ,"_work"))}
+for(i in 1:6){setnames(dt_07, paste0( "b10_", i), paste0(i ,"_marstat"))}
+dt_07[, paste0(1:6, "_livstat"):= 0, ] #0 = 住在一起
+dt_07[, paste0(1:6, "_livwhere"):= 0, ] #0 = 住在一起
+dt_07[, paste0(1:6, "_meet"):= 0, ] #0 = 住在一起
+dt_07[, paste0(1:6, "_tele"):= 0, ] #0 = 住在一起
+
+
+# 不同住子女
+for(i in 11:21){setnames(dt_07, paste0( "b5_", i), paste0(i-4 ,"_relation"))}
+for(i in 11:21){setnames(dt_07, paste0( "b6_", i), paste0(i-4 ,"_gender"))}
+for(i in 11:21){setnames(dt_07, paste0( "b7_", i), paste0(i-4 ,"_age"))}
+for(i in 11:21){setnames(dt_07, paste0( "b8_", i), paste0(i-4 ,"_edu"))}
+for(i in 11:21){setnames(dt_07, paste0( "b9_", i), paste0(i-4 ,"_work"))}
+for(i in 11:21){setnames(dt_07, paste0( "b10_", i), paste0(i-4 ,"_marstat"))}
+for(i in 11:21){setnames(dt_07, paste0( "b11_", i), paste0(i-4 ,"_livstat"))}
+for(i in 11:21){setnames(dt_07, paste0( "b12_", i), paste0(i-4 ,"_livwhere"))}
+for(i in 11:21){setnames(dt_07, paste0( "b13_", i), paste0(i-4 ,"_meet"))}
+for(i in 11:21){setnames(dt_07, paste0( "b14_", i), paste0(i-4 ,"_tele"))}
+
+#抓到配偶了！ no18
+# 配偶抓不太下來，資料零碎不齊
+# dt_07[, "18_relation":= 配偶]
+# dt_07[, "18_gender":= ifelse(cvr1==1, 2, 1)] #這裡用opposite gender of 被訪問者，可能會漏掉同性家庭
+# setnames(dt_07, c("a2b","a2c"), paste0(18,c("_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")))
+
+
+# 同住他人
+# no13後的他人 都是NA
+for(i in 1:9){setnames(dt_07, paste0( "b16_", i), paste0(i+17 ,"_relation"))}
+for(i in 1:9){setnames(dt_07, paste0( "b17_", i), paste0(i+17 ,"_gender"))}
+for(i in 1:9){setnames(dt_07, paste0( "b18_", i), paste0(i+17 ,"_age"))}
+for(i in 1:9){setnames(dt_07, paste0( "b19_", i), paste0(i+17 ,"_edu"))}
+for(i in 1:9){setnames(dt_07, paste0( "b20_", i), paste0(i+17 ,"_work"))}
+for(i in 1:9){setnames(dt_07, paste0( "b21_", i), paste0(i+17 ,"_marstat"))}
+
+for(i in 10:13){setnames(dt_07, paste0( "b16_", i), paste0(i+17 ,"_relation"))}
+for(i in 10:13){setnames(dt_07, paste0( "b17_", i), paste0(i+17 ,"_gender"))}
+for(i in 10:13){setnames(dt_07, paste0( "b18_", i), paste0(i+17 ,"_age"))}
+for(i in 10:13){setnames(dt_07, paste0( "b19_", i), paste0(i+17 ,"_edu"))}
+for(i in 10:13){setnames(dt_07, paste0( "b20_", i), paste0(i+17 ,"_work"))}
+for(i in 10:13){setnames(dt_07, paste0( "b21_", i), paste0(i+17 ,"_marstat"))}
+dt_07[, paste0(18:30, "_livstat"):= 0, ] #0 = 住在一起
+dt_07[, paste0(18:30, "_livwhere"):= 0, ] #0 = 住在一起
+dt_07[, paste0(18:30, "_meet"):= 0, ] #0 = 住在一起
+dt_07[, paste0(18:30, "_tele"):= 0, ] #0 = 住在一起
+
+
+
+cols<- c(unlist( lapply(paste0("^", 1:30,"_"), function(x){grep(x, names(dt_07), value = T)})))
+class(cols)
+fam_07<- dt_07[, cols, with=FALSE ]
+dt_07 <- cbind(demo_dt_07, adls_dt_07, dis_dt_07, fam_07)
+
+```
+
+```{r}
+library(reshape)
+
+liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+
+cols<- unlist(lapply(1:30, function(x){paste0(x,liv)}))
+cols<- append(c("ser_no", "survey_year", "qtype","adl_who_help"), cols)
+tt<- dt_07[, .SD, .SDcols=cols ] 
+
+x<- list( c(paste0(1:30, "_relation")), c(paste0(1:30, "_gender")), c(paste0(1:30, "_age")), c(paste0(1:30,"_edu")), c(paste0(1:30, "_work")), c(paste0(1:30, "_marstat")), c(paste0(1:30, "_livstat")), c(paste0(1:30, "_livwhere")), c(paste0(1:30, "_meet")), c(paste0(1:30, "_tele")))
+
+dt_07_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype","adl_who_help") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
+
+dt_07_reshape <- as.data.table(dt_07_reshape)
+dt_07_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
+
+# NAs 是有出現在codebook上，但沒有出現在dataset裡面的資料...
+```
+
+
+
