@@ -219,4 +219,39 @@ dt_07_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
 ```
 
 
+```{r}
+fam_07 <- dt_07_reshape
+table(sort(fam_07$gender))
+test<- fam_07[fam_07$gender !=8]
+
+test[,relationship:= as.numeric(as.character(relationship))]
+test[,age:= as.numeric(as.character(age))]
+test[,edu:= as.numeric(as.character(edu))]
+test[,work:= as.numeric(as.character(work))]
+test[,marstat:= as.numeric(as.character(marstat))]
+test[,livstat:= as.numeric(as.character(livstat))]
+test[,livwhere:= as.numeric(as.character(livwhere))]
+test[, meet:= as.numeric(as.character(meet))]
+test[,tele:= as.numeric(as.character(tele))]
+
+table(sort(test$relationship))
+table(sort(test$gender))
+table(sort(test$work))
+table(sort(test$edu)) # 一些不適用的被分配到其他地方去了... 
+table(sort(test$marstat))
+table(sort(test$livstat))
+table(sort(test$livwhere))
+table(sort(test$meet))
+table(sort(test$tele))
+
+test[, work:= ifelse(edu %in% c(1:14), 2, work)]
+test[, edu:= ifelse(edu ==90 & work==88 ,88 , edu)]
+
+
+
+fam_07<-test
+
+```
+
+
 

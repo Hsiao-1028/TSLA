@@ -1,0 +1,93 @@
+---
+title: "Learning .SD and meta programming"
+author: "Hsiao"
+date: "6/6/2021"
+output: html_document
+---
+
+```{r}
+# learning progress 
+# use packages
+library("data.table")
+```
+---
+
+.SD refers to the subset of the data.table for each group, excluding all columns used in by.
+.SD along with lapply can be used to apply any function to multiple columns by group in a data.table
+
+
+---
+
+```{r}
+mtcars = data.table(mtcars) # Let's not include rownames to keep things simpler
+test<- mtcars[ , lapply(.SD, summary), by = .(cyl,vs)]
+# by =.(a,b) <=>  by = c("A", "B")
+# take means to other variables exclude the cyl
+# since cyl refers to the categoreis 
+
+```
+
+Apart from cyl, there are other categorical columns in the dataset such as vs, am, gear and carb. It doesn't really make sense to take the mean of these columns. So let's exclude these columns. This is where .SDcols comes into the picture.
+---
+
+.SDcols specifies the columns of the data.table that are included in .SD.
+Mean of all columns (continuous columns) in the dataset by number of gears gear, and number of cylinders, cyl, arranged by gear and cyl:
+
+```{r}
+cols_chosen <- c("mpg", "disp", "hp", "drat", "wt", "qsec")
+# the not chosen column will then disappear!
+
+test2<- mtcars[order(gear, cyl), lapply(.SD, mean), by = .(gear, cyl), .SDcols = cols_chosen]
+
+# not specifying any type -> omit using by 
+test3<- mtcars[ , lapply(.SD, mean), .SDcols = cols_chosen] 
+
+test4<- mtcars[ , .SD[ , paste(vs, am, gear , sep="", collapse="_")], by=cyl, .SDcols = c("vs","am")]
+
+
+test5<- mtcars[, "m_id":= paste(vs, am, gear, sep="", collapse = "_"),]
+
+```
+
+reference: 
+https://riptutorial.com/data-table/example/13084/using--sd-and--sdcols
+
+----------------------------------------------------------------
+Meta-Programming
+
+
+```{r}
+l1 <- list(
+  1:3, 
+  "a", 
+  c(TRUE, FALSE, TRUE), 
+  c(2.3, 5.9)
+)
+
+str(l4)
+print(l1)
+l4 <- list(list(1, 2), c(3, 4))
+l5 <- c(list(1, 2), c(3, 4))
+```
+
+
+```{r}
+# meta -programming 
+
+library(rlang)
+library(lobstr)
+
+expr(lookup)
+
+```
+
+```{r}
+z <- rlang::expr(y <- x * 10)
+z
+
+x <- 4
+eval(z)
+y
+
+
+```

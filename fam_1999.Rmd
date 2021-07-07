@@ -161,10 +161,47 @@ dt_99_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
 
 
 
-
-
 ```
 
+```{r}
+# cleaning 
+########## as.numeric (as.character)
+fam_99 <- as.data.table(dt_99_reshape)
+test<- fam_99[gender %in% c(1,2,9)]
+
+table(sort(test$edu))
+
+test[,relationship:= as.numeric(as.character(relationship))]
+test[,age:= as.numeric(as.character(age))]
+test[,edu:= as.numeric(as.character(edu))]
+test[,work:= as.numeric(as.character(work))]
+test[,marstat:= as.numeric(as.character(marstat))]
+test[,livstat:= as.numeric(as.character(livstat))]
+test[,livwhere:= as.numeric(as.character(livwhere))]
+test[, meet:= as.numeric(as.character(meet))]
+test[,tele:= as.numeric(as.character(tele))]
+
+# lapply(test[, .SD, .SDcols = c("age","edu","work","marstat","livstat","livwhere","meet","tele")], as.numeric)
+
+
+test[,meet:= ifelse(test$meet ==8, 99 ,test$meet)]
+
+fam_99<-test
+```
+
+
+```{r}
+
+test[,livstattest:= ifelse(test$livstat ==4, 5 ,test$livstat)]
+test[,livstattest2:= ifelse(test$livstat ==3, 4 ,test$livstat)]
+
+##### wtf 為什麼做 ifelse 操作後又會亂數了？
+class(test$livestat)
+class(test$livstattest)
+table(sort(test$livstat))
+table(sort(test$livstattest))
+#####
+```
 
 
 

@@ -1,0 +1,130 @@
+---
+title: "Regular_expression"
+author: "Hsiao"
+date: "6/10/2021"
+output: html_document
+---
+
+```{r}
+#packages :
+
+library("data.table")
+library(magrittr)
+library(stringr)
+library(glue)
+# %>% --> and then ..
+
+
+```
+
+
+```{r}
+# grepl
+mtcars = data.table(mtcars)
+
+
+```
+
+```{r}
+
+```
+-----------
+#^__  :start with ___
+#__$ :end with __
+# Star. : Star something, e.g. Star3, Star4, etc
+
+
+
+```{r}
+# Familiarize yourself with the vector by printing it
+movie_titles
+
+# List all movies that start with "The"
+# ^The -> means it start with The
+movie_titles[str_detect(
+  movie_titles,
+  pattern = "^The"
+)]
+
+# List all movies that end with "3D"
+# 3D$ 
+movie_titles[str_detect(
+  movie_titles,
+  pattern = "3D$"
+)]
+
+# \\s -> space
+# \\w -> word characters and numbers  
+# [a-zA-Z] can therefore be applied for juts characters
+# [aeiou]
+# \\d -> digit
+# Negations : \\D, \\W, \\S, [^aeiou]
+
+# \\w* Match zero or one or more 
+# \\s+ Match at least 1 
+# e.g.  [aeiou]{2} 找兩個連續的母音
+# List all movies that end with a space and a digit
+movie_titles[str_detect(movie_titles,
+  pattern = "\\s\\d$"
+)]
+
+str<- c("aeddd","bcsde","ccadi","ouide")
+str[str_detect(str, pattern = "[aeiou]{2}")]
+
+# List all movies that contain "Grey" or "Gray"
+movie_titles[str_detect(movie_titles,
+  pattern = "Gr[ae]y"
+)]
+
+# ^ means no here
+# List all movies with strange characters (no word or space)
+movie_titles[str_detect(movie_titles,
+  pattern = "[^\\w\\s]"
+)]
+
+
+# This lists all movies with two or more digits in a row
+movie_titles[str_detect(
+  movie_titles,
+  pattern = "\\d{2,}"
+)]
+
+# List just the first words of every movie title
+str_match(movie_titles, pattern = "\\w*")
+
+# Match everything that comes before "Knight"
+str_match(movie_titles, pattern = ".*Knight")
+
+# Or
+# Use the pattern from above that matched the whole movie names
+str_match(lines, pattern = "Finding (Nemo|Harmony|Dory)")
+
+# ? 只會對前一個有效
+# Match both Screen and Screens by making the last "s" optional
+str_match(lines, pattern = "Screens?")
+
+#Greedy : if default -> 會找到最後一串裡面最後這樣pattern的東西
+# Match a random amount of arbitrary characters, followed by a comma
+str_match(lines, pattern = ".+,")
+
+# Lazy : 用?去做，會找到一串裡面最前面這樣pattern的東西
+# Match the same pattern followed by a comma, but the "lazy" way
+str_match(lines, pattern = ".*?,")
+```
+```{r}
+# Create the same result as the paste above with glue
+glue("{firstname}'s last name is {lastname}.")
+
+# Create a temporary varible "n" and use it inside glue
+glue(
+  "The name {firstname} consists of {n} characters.",
+  n = nchar(firstname)
+)
+
+
+```
+
+---
+reference
+https://datascienceandr.org/articles/RegularExpression.html
+

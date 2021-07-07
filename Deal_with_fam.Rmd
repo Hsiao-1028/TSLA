@@ -1,0 +1,88 @@
+---
+title: "Deal_with_fam"
+author: "Hsiao"
+date: "7/7/2021"
+output: html_document
+---
+
+Clean the data and check coherent
+
+1. Relationships : 
+Benchmark 2007
+2003: identical
+1999: almost identical ( despite lack of 0:none, 1:self, which are not important)
+1996: almost identical ( 97:家人->養媳，但應該非常少見)
+1993 : 前段大部分一致（么兒、么女除外）。混亂
+
+88: not applicable, 99: missing
+
+2. Gender : 
+1:Male, 2:Female, 8: Not Applicable, 9: missing
+
+3. Age : 
+[0:99], 88;not applicable, 99: missing
+
+4: Edu : (6 yo up)
+Benchmark 2007
+2003: + 18博士
+1999: identical 
+1996: 沒有空中大學系列
+
+5: work: 6up
+benchmark 2007 : 88不適用, 98不知道, 99 missing
+2003 : 8不適用, 9 missing
+1999 : 同2003
+1996 : 同2003
+
+6: marstat : identical 
+
+7: livstat : 
+benchmark 2007
+2003 : identical 
+1999: 2求學+工作, 3兵役, 4其他 ！要改 ( unsolve)
+1996: 1一直住家裡, 2求學, 3兵役, 4工作, 7其他 不同住：0
+
+8. livwhere ：
+9. meet: idetical 
+10. tele: almost identical 
+
+```{r}
+fam<- rbind(fam_96, fam_99, fam_03, fam_07)
+
+table(sort(fam$relationship))
+table(sort(fam_07$gender)) # gender ==3 出現在07年，就是泛稱的家人
+table(sort(fam$age))
+hist(fam$age)
+table(sort(fam$edu))
+fam[,work:= ifelse(fam$work ==8, 88, work)]
+table(sort(fam$work))
+table(sort(fam$marstat)) # 88 算15歲以下， 之前的88是算6歲以下
+fam[,livwhere:= ifelse(fam$livwhere ==8, 0, livwhere)] # 不適用者是住家裡
+table(sort(fam$livstat))
+table(sort(fam$livwhere))
+fam[,meet:= ifelse(fam$meet ==88, 0, meet)] # 不適用者是住家裡
+fam[,tele:= ifelse(fam$tele ==88, 0, tele)] # 不適用者是住家裡
+table(fam$meet)
+table(fam$tele)
+
+fam[survey_year ==1999, livstat:= ifelse(fam[survey_year==1999]$livstat ==4, 5, fam[survey_year==1999]$livstat)]
+fam[survey_year ==1999, livstat:= ifelse(fam[survey_year==1999]$livstat ==3, 4, fam[survey_year==1999]$livstat)] # 3: 因為工作而住在外面，被混在2裡面 當年coding問題
+table(sort(fam[survey_year==1999, ,]$livstat))
+
+write.table(fam, file = "fam_v2.csv", sep = ",")
+
+```
+
+
+
+```{r}
+# matching 
+
+fam<- read.csv("/Users/Ano/Desktop/HRS_Chao/TSLA/fam_v2.csv")
+
+
+
+
+
+
+```

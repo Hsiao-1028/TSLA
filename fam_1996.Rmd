@@ -412,6 +412,52 @@ dt_96y_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
 
 
 ```
+Cleaning
+```{r}
+
+fam_96 <- rbind(dt_96o_reshape, dt_96y_reshape)
+
+
+fam_96 <-fam_96[gender!= 8] 
+fam_96<- as.data.table(fam_96)
+# gender !=8 & age ==88 ->真的88歲的親屬
+# gender !=8 & edu==88, work==88 -> 6歲以下的親屬
+table(sort(fam_96$livstat))
+
+fam_96[,livstat:= ifelse(fam_96$livstat== 0, 999, livstat)] # 0 改成同住, 1 改成不同住
+fam_96[,livstat:= ifelse(fam_96$livstat== 1, 0, livstat)]
+fam_96[,livstat:= ifelse(fam_96$livstat== 999, 1, livstat)]
+fam_96[,livstat:= ifelse(fam_96$livstat== 3, 996, livstat)] # 3改成工作 , 4改成兵役
+fam_96[,livstat:= ifelse(fam_96$livstat== 4, 3, livstat)]
+fam_96[,livstat:= ifelse(fam_96$livstat== 996, 4, livstat)]
+table(sort(fam_96$livstat))
+
+
+# lapply(fam_96[, .SD, .SDcols= grep("^who_help", names(fam_96))], function(x){replace(x, x==88, NA)})
+fam_96[, who_helpbath:= ifelse(who_helpbath==88, NA, who_helpbath)]
+fam_96[, who_helpclothes:= ifelse(who_helpclothes==88, NA, who_helpclothes)]
+fam_96[, who_helpdine:= ifelse(who_helpdine==88, NA, who_helpdine)]
+fam_96[, who_helpwakeup:= ifelse(who_helpwakeup==88, NA, who_helpwakeup)]
+fam_96[, who_helpwalkinside:= ifelse(who_helpwalkinside==88, NA, who_helpwalkinside)]
+fam_96[, who_helpWC:= ifelse(who_helpWC==88, NA, who_helpWC)]
+
+# 眾數
+Mode <- function(x) {
+ ux <- na.omit(unique(x))
+ ux[which.max(tabulate(match(x, ux)))]
+}
+fam_96[, "adl_who_help":= apply(fam_96[, .SD, .SDcols = grep("^who_help", names(fam_96))], 1, Mode)]
+
+fam_96[,adl_who_help:= ifelse(is.na(adl_who_help), 88, adl_who_help)]
+fam_96[, grep("^who_help", names(fam_96)):=NULL, ]
+
+fam_96<- fam_96[relationship!=0, ]
+
+
+
+
+
+```
 
 
 
