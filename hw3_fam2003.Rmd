@@ -160,6 +160,29 @@ dis_dt_03o<- setNames(dis_dt_03o, dis_03o)
 #re:
 #fam03y
 
+# 抓伴侶
+
+dt_03y[, "0_relation":= 2]
+dt_03y[, "0_gender":= ifelse(dt_03y$sex ==1, 2, 1)]
+dt_03y[, "0_gender" := ifelse(dt_03y$a13 %in% c(2,3,4,5), 8, dt_03y$"0_gender")]
+dt_03y[, "0_age":= 92 - as.numeric(as.character(dt_03y$a15roc))]
+dt_03y[, "0_age":= ifelse(dt_03y$"0_age" %in% c(4, -6, -7), 999,dt_03y$"0_age" )]
+dt_03y[, "0_edu":=  as.numeric(as.character(dt_03y$a17))]
+
+dt_03y[, "0_work":= as.numeric(as.character(dt_03y$e23))]
+dt_03y[, "0_work":=  ifelse(dt_03y$"0_work" %in% c(2,6), 7,dt_03y$"0_work" ) ]
+dt_03y[, "0_work":=  ifelse(dt_03y$"0_work" == 4, 5, dt_03y$"0_work" ) ]
+dt_03y[, "0_work":=  ifelse(dt_03y$"0_work" %in% c(3,5), 4,dt_03y$"0_work" ) ]
+dt_03y[, "0_marstat":= 1]
+dt_03y[, "0_livstat":= 0]
+dt_03y[, "0_livwhere":= 0]
+dt_03y[, "0_meet":= 0]
+dt_03y[, "0_tele":= 0]
+
+
+
+
+
 
 # 同住子女 (5)
 # No.6 is missing in the data set
@@ -205,7 +228,7 @@ dt_03y[, paste0(14:25, "_livwhere"):= 0, ] #0 = 住在一起
 dt_03y[, paste0(14:25, "_meet"):= 0, ] #0 = 住在一起
 dt_03y[, paste0(14:25, "_tele"):= 0, ] #0 = 住在一起
 
-cols<- c(unlist( lapply(paste0("^", 1:25,"_"), function(x){grep(x, names(dt_03y), value = T)})))
+cols<- c(unlist( lapply(paste0("^", 0:25,"_"), function(x){grep(x, names(dt_03y), value = T)})))
 class(cols)
 fam_03y<- dt_03y[, cols, with=FALSE ]
 dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y, fam_03y)
@@ -217,6 +240,41 @@ dt_03y <- cbind(demo_dt_03y, adls_dt_03y, dis_dt_03y, fam_03y)
 
 ```{r}
 #fam_03o
+
+dt_96<- as.data.table( rbind(dt_96_o, dt_96_y, fill = TRUE))
+
+dt_99[,"ID":= paste0(dt_99$qtype, dt_99$ser_no)]
+dt_03o[,"ID":= paste0(dt_03o$qtype, dt_03o$ser_no)]
+
+# survive_A<- intersect(dt_96[qtype =="A" ]$ser_no, dt_99[qtype =="A"]$ser_no)
+# survive_B<- intersect(dt_96[qtype =="B"]$ser_no, dt_99[qtype =="B"]$ser_no)
+survive<- intersect(dt_03o$ID, dt_99$ID)
+
+ss<- dt_99[ID %in% survive, c("ID","0_age", "0_edu")]
+setnames(ss, c("ID", "0_age", "0_edu"), c("ID", "99age", "99edu"))
+dt_03o<- ss[dt_03o, on="ID"]
+
+
+
+# 伴侶
+# 沒抓到更新的伴侶
+dt_03o[, "0_relation":= 2]
+dt_03o[, "0_gender":= ifelse(dt_03o$sex ==1, 2, 1)]
+dt_03o[, "0_gender":= ifelse(dt_03o$a192 %in% c(3,4,5,6,9), 8, dt_03o$"0_gender" )] # 排除非同居伴侶
+dt_03o[, "0_age":= dt_03o$"99age"+4]
+dt_03o[, "0_edu":= dt_03o$"99edu"]
+dt_03o[, "0_work":= as.numeric(as.character(dt_03o$e20))]
+dt_03o[, "0_work":=  ifelse(dt_03o$"0_work" %in% c(2,6), 7,dt_03o$"0_work" ) ]
+dt_03o[, "0_work":=  ifelse(dt_03o$"0_work" == 4, 5, dt_03o$"0_work" ) ]
+dt_03o[, "0_work":=  ifelse(dt_03o$"0_work" %in% c(3,5), 4,dt_03o$"0_work" ) ]
+dt_03o[, "0_marstat":= 1]
+dt_03o[, "0_livstat":= 0]
+dt_03o[, "0_livwhere":= 0]
+dt_03o[, "0_meet":= 0]
+dt_03o[, "0_tele":= 0]
+
+
+
 
 # 同住子女(5)
 for(i in 1:5){setnames(dt_03o, paste0( "b50", i), paste0(i ,"_relation"))}
@@ -261,7 +319,7 @@ dt_03o[, paste0(14:25, "_livwhere"):= 0, ] #0 = 住在一起
 dt_03o[, paste0(14:25, "_meet"):= 0, ] #0 = 住在一起
 dt_03o[, paste0(14:25, "_tele"):= 0, ] #0 = 住在一起
 
-cols<- c(unlist( lapply(paste0("^", 1:25,"_"), function(x){grep(x, names(dt_03o), value = T)})))
+cols<- c(unlist( lapply(paste0("^", 0:25,"_"), function(x){grep(x, names(dt_03o), value = T)})))
 class(cols)
 fam_03o<- dt_03o[, cols, with=FALSE ]
 dt_03o <- cbind(demo_dt_03o, adls_dt_03o, dis_dt_03o, fam_03o)
@@ -275,11 +333,11 @@ library(reshape)
 
 liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
 
-cols<- unlist(lapply(1:25, function(x){paste0(x,liv)}))
+cols<- unlist(lapply(0:25, function(x){paste0(x,liv)}))
 cols<- append(c("ser_no", "survey_year", "qtype","adl_who_help"), cols)
 tt<- dt_03y[, .SD, .SDcols=cols ] 
 
-x<- list( c(paste0(1:25, "_relation")), c(paste0(1:25, "_gender")), c(paste0(1:25, "_age")), c(paste0(1:25,"_edu")), c(paste0(1:25, "_work")), c(paste0(1:25, "_marstat")), c(paste0(1:25, "_livstat")), c(paste0(1:25, "_livwhere")), c(paste0(1:25, "_meet")), c(paste0(1:25, "_tele")))
+x<- list( c(paste0(0:25, "_relation")), c(paste0(0:25, "_gender")), c(paste0(0:25, "_age")), c(paste0(0:25,"_edu")), c(paste0(0:25, "_work")), c(paste0(0:25, "_marstat")), c(paste0(0:25, "_livstat")), c(paste0(0:25, "_livwhere")), c(paste0(0:25, "_meet")), c(paste0(0:25, "_tele")))
 
 dt_03y_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype","adl_who_help") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
 
@@ -287,13 +345,19 @@ dt_03y_reshape <- as.data.table(dt_03y_reshape)
 dt_03y_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
 
 
+
+
+liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
+
+cols<- unlist(lapply(0:25, function(x){paste0(x,liv)}))
+cols<- append(c("ser_no", "survey_year", "qtype","adl_who_help"), cols)
 tt<- dt_03o[, .SD, .SDcols=cols ] 
 
-x<- list( c(paste0(1:25, "_relation")), c(paste0(1:25, "_gender")), c(paste0(1:25, "_age")), c(paste0(1:25,"_edu")), c(paste0(1:25, "_work")), c(paste0(1:25, "_marstat")), c(paste0(1:25, "_livstat")), c(paste0(1:25, "_livwhere")), c(paste0(1:25, "_meet")), c(paste0(1:25, "_tele")))
+x<- list( c(paste0(0:25, "_relation")), c(paste0(0:25, "_gender")), c(paste0(0:25, "_age")), c(paste0(0:25,"_edu")), c(paste0(0:25, "_work")), c(paste0(0:25, "_marstat")), c(paste0(0:25, "_livstat")), c(paste0(0:25, "_livwhere")), c(paste0(0:25, "_meet")), c(paste0(0:25, "_tele")))
 
 dt_03o_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype","adl_who_help") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
 
-dt_03o_reshape <- as.data.table(dt_03y_reshape)
+dt_03o_reshape <- as.data.table(dt_03o_reshape)
 dt_03o_reshape[, "member_id":= paste0(qtype, ser_no, "_", ID_i)]
 
 
@@ -770,7 +834,12 @@ dfW2 <- reshape(dfW1, v.names=c("DV.1", "DV.2", "DV.3"),
                 timevar="IV2", idvar="id", direction="wide")
 
 all.equal(dfW, dfW2, check.attributes=FALSE)
+
+
+
 ```
+
+
 
 
 
