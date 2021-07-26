@@ -76,7 +76,46 @@ dis_dt_99<- setNames(dis_dt_99, dis_99)
 
 ```{r}
 #fam
+dt_96<- as.data.table( rbind(dt_96_o, dt_96_y, fill = TRUE))
+dt_96[,"ID":= paste0(dt_96$qtype, dt_96$ser_no)]
+dt_99[,"ID":= paste0(dt_99$qtype, dt_99$ser_no)]
 
+# survive_A<- intersect(dt_96[qtype =="A" ]$ser_no, dt_99[qtype =="A"]$ser_no)
+# survive_B<- intersect(dt_96[qtype =="B"]$ser_no, dt_99[qtype =="B"]$ser_no)
+survive<- intersect(dt_96$ID, dt_99$ID)
+
+ss<- dt_96[ID %in% survive, c("ID", "rsex", "0_age", "0_edu")]
+setnames(ss, c("ID", "rsex", "0_age", "0_edu"), c("ID","rsex_96", "96age", "96edu"))
+
+dt_99<- ss[dt_99, on="ID"]
+
+dt_99$rsex<- dt_99$rsex_96
+
+# ssa<- dt_96[qtype =="A", c("ser_no","rsex", "qtype")]
+# ssb<- dt_96[qtype =="B", c("ser_no","rsex", "qtype")]
+# dt_99a <- dt_99[qtype =="A"]
+# dt_99a<- ssa[dt_99a, on="ser_no"]
+# dt_99b <- dt_99[qtype =="B"]
+# dt_99b<- ssa[dt_99b, on="ser_no"]
+# dt_99<- as.data.table( rbind(dt_99a, dt_99b))
+
+
+# 伴侶：
+
+dt_99[, "0_relation":= 2] 
+dt_99[, "0_gender":= ifelse(dt_99$rsex ==1, 2, 1)] 
+dt_99[, "0_gender":= ifelse(dt_99$a1_2 %in% c(3,4,5,6), 8, dt_99$"0_gender")]  # 不同住的配偶會在這裡被清掉
+dt_99[, "0_age":= dt_99$"96age"+ 3]
+dt_99[, "0_edu":= dt_99$"96edu"]
+dt_99[, "0_work":=  as.character(dt_99$e20)]
+dt_99[, "0_work":=  ifelse(dt_99$"0_work" %in% c(2,6), 7,dt_99$"0_work" ) ]
+dt_99[, "0_work":=  ifelse(dt_99$"0_work" == 4, 5, dt_99$"0_work" ) ]
+dt_99[, "0_work":=  ifelse(dt_99$"0_work" %in% c(3,5), 4,dt_99$"0_work" ) ]
+dt_99[, "0_marstat":= 1]
+dt_99[, "0_livstat":= 0]
+dt_99[, "0_livwhere":= 0]
+dt_99[, "0_meet":= 0]
+dt_99[, "0_tele":= 0]
 
 # 同住子女 (6)
 # No.6 is missing in the data set
@@ -133,10 +172,11 @@ table(sort(dt_99$"21_relation"))
 # class(x)
 
 
-cols<- c(unlist( lapply(paste0("^", 1:33,"_"), function(x){grep(x, names(dt_99), value = T)})))
+cols<- c(unlist( lapply(paste0("^", 0:33,"_"), function(x){grep(x, names(dt_99), value = T)})))
 class(cols)
 fam_99<- dt_99[, cols, with=FALSE ]
 dt_99 <- cbind(demo_dt_99, adls_dt_99, dis_dt_99, fam_99)
+
 
 ```
 
@@ -146,11 +186,11 @@ library(reshape)
 
 liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
 
-cols<- unlist(lapply(1:33, function(x){paste0(x,liv)}))
+cols<- unlist(lapply(0:33, function(x){paste0(x,liv)}))
 cols<- append(c("ser_no", "survey_year", "qtype","adl_who_help"), cols)
 tt<- dt_99[, .SD, .SDcols=cols ] 
 
-x<- list( c(paste0(1:33, "_relation")), c(paste0(1:33, "_gender")), c(paste0(1:33, "_age")), c(paste0(1:33,"_edu")), c(paste0(1:33, "_work")), c(paste0(1:33, "_marstat")), c(paste0(1:33, "_livstat")), c(paste0(1:33, "_livwhere")), c(paste0(1:33, "_meet")), c(paste0(1:33, "_tele")))
+x<- list( c(paste0(0:33, "_relation")), c(paste0(0:33, "_gender")), c(paste0(0:33, "_age")), c(paste0(0:33,"_edu")), c(paste0(0:33, "_work")), c(paste0(0:33, "_marstat")), c(paste0(0:33, "_livstat")), c(paste0(0:33, "_livwhere")), c(paste0(0:33, "_meet")), c(paste0(0:33, "_tele")))
 
 dt_99_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype","adl_who_help") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
 

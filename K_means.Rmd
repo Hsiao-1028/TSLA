@@ -1,0 +1,187 @@
+---
+title: "K-means"
+author: "Hsiao"
+date: "2021/7/19"
+output: html_document
+---
+
+
+```{r}
+# packages 
+library("data.table") 
+library("magrittr")
+library("naniar")
+library("plyr")
+library("dplyr")
+library("stringr")
+library("ggplot2")
+library("tidyr")
+library("tibble")
+###############
+library("factoextra")
+
+library("scclust")
+
+```
+
+```{r}
+head(iris)
+data <- iris[, -5] # 因為Species是第五欄位，故移除掉
+head(data)   
+
+E.dist <- dist(data, method="euclidean") # 歐式距離
+M.dist <- dist(data, method="manhattan") # 曼哈頓距離
+
+par(mfrow=c(1,2)) # 讓圖片以1x2的方式呈現，詳情請見(4)繪圖-資料視覺化
+
+# 使用歐式距離進行分群
+h.E.cluster <- hclust(E.dist)
+plot(h.E.cluster, xlab="歐式距離")
+
+# 使用曼哈頓距離進行分群
+h.M.cluster <- hclust(M.dist) 
+plot(h.M.cluster, xlab="曼哈頓距離")
+
+E.dist <- dist(data, method="euclidean")      # 歐式距離
+h.cluster <- hclust(E.dist, method="ward.D2") # 華德法
+
+# 視覺化
+plot(h.cluster)
+abline(h=9, col="red")
+
+cut.h.cluster <- cutree(h.cluster, k=3)  # 分成三群
+cut.h.cluster                            # 分群結果
+
+table(cut.h.cluster, iris$Species)       # 分群結果和實際結果比較
+
+data <- as.data.table(data)
+data[, group:= cut.h.cluster]
+```
+
+
+```{r}
+# K-means
+kmeans.cluster <- kmeans(data, centers=3) 
+
+# 群內的變異數
+kmeans.cluster$withinss
+
+class(kmeans.cluster)
+str(kmeans.cluster)
+
+data[, k_means:= kmeans.cluster$cluster]
+
+# K-Medoid
+
+require(cluster)
+
+# pam = Partitioning Around Medoids
+kmedoid.cluster <- pam(data, k=3) 
+
+# 群內的變異數
+kmedoid.cluster$objective
+```
+
+```{r}
+# decide the numbers of clusters : 
+
+
+# Elbow Method 應用在 階層式分析
+# 注意：這裡使用的是hcut()，屬於factoextra套件，並非上面提的hclust()
+s<- fviz_nbclust(data, 
+             FUNcluster = kmeans,  # hierarchical clustering
+             method = "wss",     # total within sum of square
+             k.max = 12          # max number of clusters to consider
+             ) + 
+    
+labs(title="Elbow Method for HC") +
+    
+geom_vline(xintercept = 3,       # 在 X=3的地方 
+           linetype = 2)         # 畫一條虛線
+
+
+str(s)
+s
+```
+
+```{r}
+# constrained K-means
+
+# Make example data
+my_data <- data.frame(id = 1:50000,
+type = factor(rbinom(50000, 3, 0.3),
+labels = c("A", "B", "C", "D")),
+x1 = rnorm(50000),
+x2 = rnorm(50000),
+x3 = rnorm(50000))
+
+# Construct distance metric
+my_dist <- distances(my_data,
+id_variable = "id",
+dist_variables = c("x1", "x2", "x3"))
+
+# test_dist <- distances(test1, id_variable = NULL, dist_variables =  c("gender","birthyear","edu"))
+
+
+# Make clustering with at least 3 data points in each cluster
+my_clustering <- sc_clustering(my_dist, 3)
+
+# test_clustering<- sc_clustering( test_dist, 6)
+
+# Check so clustering satisfies constraints
+check_clustering(my_clustering, 3)
+# > TRUE
+
+# Get statistics about the clustering
+get_clustering_stats(my_dist, my_clustering)
+# > num_data_points 5.000000e+04
+
+# Make clustering with at least one point of each type in each cluster
+my_clustering <- sc_clustering(my_dist,
+type_labels = my_data$type,
+type_constraints = c("A" = 1, "B" = 1,
+"C" = 1, "D" = 1))
+
+# Check so clustering satisfies constraints
+check_clustering(my_clustering,
+type_labels = my_data$type,
+type_constraints = c("A" = 1, "B" = 1,
+"C" = 1, "D" = 1))
+# > TRUE
+
+# Make clustering with at least 8 points in total of which at least
+# one must be "A", two must be "B" and five can be any type
+my_clustering <- sc_clustering(my_dist,
+size_constraint = 8,
+type_labels = my_data$type,
+type_constraints = c("A" = 1, "B" = 2))
+
+View(my_clustering)
+
+test_clustering <- sc_clustering( test_dist, size_constraint = 6, type_labels = test1$survey_year, type_constraints = c("2007"=6 ))
+
+test1[, group_scc := test_clustering]
+```
+
+
+```{r}
+library("RclusTool")
+
+dat <- rbind(matrix(rnorm(100, mean = 0, sd = 0.3), ncol = 2), 
+             matrix(rnorm(100, mean = 2, sd = 0.3), ncol = 2), 
+             matrix(rnorm(100, mean = 4, sd = 0.3), ncol = 2))
+tf <- tempfile()
+write.table(dat, tf, sep=",", dec=".")
+x <- importSample(file.features=tf, dir.save=tempdir())
+
+ML=list(c(sel="10",mem="20"))
+CNL=list(c(sel="1",mem="140"))
+
+res.ckmeans <- computeCKmeans(x$features$initial$x, K=0, mustLink=ML, cantLink=CNL)
+
+plot(dat[,1], dat[,2], type = "p", xlab = "x", ylab = "y", 
+col = res.ckmeans$label, main = "Constrained K-means clustering")
+
+```
+
+

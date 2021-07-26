@@ -4,6 +4,18 @@ author: "Hsiao"
 date: "6/30/2021"
 output: html_document
 ---
+```{r}
+# packages 
+library("data.table") 
+library("magrittr")
+library("naniar")
+library("plyr")
+library("dplyr")
+library("stringr")
+library("ggplot2")
+library("tidyr")
+library("tibble")
+```
 
 ```{r}
 library(data.table)
@@ -135,8 +147,39 @@ which(colnames(dt_07) =="c3c_1")
 
 ```{r}
 # fam 
-# 沒抓到配偶喔！
 # original 6, 16,17, 30 appear in codebook but not data -> I omit them (not yet done)
+
+
+
+
+# 來抓伴侶！
+dt_03<- as.data.table( rbind(dt_03o, dt_03y, fill=TRUE))
+dt_03[,"ID" := paste0(dt_03$qtype, dt_03$ser_no)]
+dt_07[,"ID":= paste0(dt_07$qtype, dt_07$ser_no)]
+survive <- intersect(dt_03$ID, dt_07$ID)
+
+ss<- dt_03[ID %in% survive, c("ID","0_age", "0_edu")]
+setnames(ss, c("ID", "0_age", "0_edu"), c("ID", "03age", "03edu"))
+dt_07<- ss[dt_07, on="ID"]
+
+# 0_ 為伴侶資料
+# 一樣沒更新新結婚的
+dt_07[, "0_relation":= 2,]
+dt_07[, "0_gender":=  ifelse(dt_07$cvr1 == 1, 2 , 1 )]
+dt_07[, "0_gender":=  ifelse(dt_07$a1_1 %in% c(2,3,9), 8 , dt_07$"0_gender" )]
+dt_07[, "0_age":= dt_07$"03age"+4]
+dt_07[, "0_edu":= dt_07$"03edu"]
+dt_07[, "0_work":= as.character(dt_07$e20)]
+dt_07[, "0_work":=  ifelse(dt_07$"0_work" %in% c(2,6), 7,dt_07$"0_work" ) ]
+dt_07[, "0_work":=  ifelse(dt_07$"0_work" == 4, 5, dt_07$"0_work" ) ]
+dt_07[, "0_work":=  ifelse(dt_07$"0_work" %in% c(3,5), 4,dt_07$"0_work" ) ]
+dt_07[, "0_marstat":= 1]
+dt_07[, "0_livstat":= 0]
+dt_07[, "0_livwhere":= 0]
+dt_07[, "0_meet":= 0]
+dt_07[, "0_tele":= 0]
+
+
 
 # 同住子女
 for(i in 1:6){setnames(dt_07, paste0( "b5_", i), paste0(i ,"_relation"))}
@@ -192,7 +235,7 @@ dt_07[, paste0(18:30, "_tele"):= 0, ] #0 = 住在一起
 
 
 
-cols<- c(unlist( lapply(paste0("^", 1:30,"_"), function(x){grep(x, names(dt_07), value = T)})))
+cols<- c(unlist( lapply(paste0("^", 0:30,"_"), function(x){grep(x, names(dt_07), value = T)})))
 class(cols)
 fam_07<- dt_07[, cols, with=FALSE ]
 dt_07 <- cbind(demo_dt_07, adls_dt_07, dis_dt_07, fam_07)
@@ -204,11 +247,11 @@ library(reshape)
 
 liv<- c("_relation","_gender","_age","_edu","_work","_marstat","_livstat","_livwhere","_meet","_tele")
 
-cols<- unlist(lapply(1:30, function(x){paste0(x,liv)}))
+cols<- unlist(lapply(0:30, function(x){paste0(x,liv)}))
 cols<- append(c("ser_no", "survey_year", "qtype","adl_who_help"), cols)
 tt<- dt_07[, .SD, .SDcols=cols ] 
 
-x<- list( c(paste0(1:30, "_relation")), c(paste0(1:30, "_gender")), c(paste0(1:30, "_age")), c(paste0(1:30,"_edu")), c(paste0(1:30, "_work")), c(paste0(1:30, "_marstat")), c(paste0(1:30, "_livstat")), c(paste0(1:30, "_livwhere")), c(paste0(1:30, "_meet")), c(paste0(1:30, "_tele")))
+x<- list( c(paste0(0:30, "_relation")), c(paste0(0:30, "_gender")), c(paste0(0:30, "_age")), c(paste0(0:30,"_edu")), c(paste0(0:30, "_work")), c(paste0(0:30, "_marstat")), c(paste0(0:30, "_livstat")), c(paste0(0:30, "_livwhere")), c(paste0(0:30, "_meet")), c(paste0(0:30, "_tele")))
 
 dt_07_reshape <- reshape(tt, varying =x , direction = "long", timevar = "ID_i", idvar = c("ser_no", "survey_year", "qtype","adl_who_help") , v.names = c("relationship","gender","age","edu","work","marstat","livstat","livwhere","meet","tele"))
 
@@ -224,6 +267,8 @@ fam_07 <- dt_07_reshape
 table(sort(fam_07$gender))
 test<- fam_07[fam_07$gender !=8]
 
+
+
 test[,relationship:= as.numeric(as.character(relationship))]
 test[,age:= as.numeric(as.character(age))]
 test[,edu:= as.numeric(as.character(edu))]
@@ -236,6 +281,7 @@ test[,tele:= as.numeric(as.character(tele))]
 
 table(sort(test$relationship))
 table(sort(test$gender))
+table(sort(fam_07$work))
 table(sort(test$work))
 table(sort(test$edu)) # 一些不適用的被分配到其他地方去了... 
 table(sort(test$marstat))
@@ -244,8 +290,10 @@ table(sort(test$livwhere))
 table(sort(test$meet))
 table(sort(test$tele))
 
-test[, work:= ifelse(edu %in% c(1:14), 2, work)]
-test[, edu:= ifelse(edu ==90 & work==88 ,88 , edu)]
+table(sort(test$adl_who_help))
+
+# test[, work:= ifelse(edu %in% c(1:14), 2, work)] # 這句出錯了！
+# test[, edu:= ifelse(edu ==90 & work==88 ,88 , edu)]
 
 
 
