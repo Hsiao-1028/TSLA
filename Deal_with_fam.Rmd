@@ -62,6 +62,8 @@ library("conclust")
 
 
 ```{r}
+# Skip this part
+# This part is merging the melted data from each year
 fam<- rbind(fam_96, fam_99, fam_03, fam_07)
 
 table(sort(fam$survey_year))
@@ -101,8 +103,6 @@ write.table(fam, file = "fam_v3.csv", sep = ",") # include partners
 table(sort(fam$adl_who_help))
 class(fam$adl_who_help)
 # adl_who_help =0 -> 沒有人幫忙
-
-
 ```
 
 
@@ -116,11 +116,9 @@ fam[, "ID":= paste0(qtype, ser_no, "_", relationship)]
 fam[,c("member_id","ID_i"):=NULL]
 
 
-
-# 單純用關係配的方式可以串連起大多C type的人
 test<- copy(fam)
-# test[, "ID":= paste0(qtype, ser_no, "_", relationship)]
-test[, birthyear := survey_year - age - 1911] # [, edu:= ifelse(test$edu == 88, NA, test1$edu) ]
+
+test[, birthyear := survey_year - age - 1911] 
 test[, education:= 88][, education := ifelse(test$edu %in% c(0,90), 0, test$education)][, education := ifelse(test$edu %in% c(1:6), 6, test$education)][, education := ifelse(test$edu %in% c(7:9),9 , test$education)][, education := ifelse(test$edu %in% c(10:12, 91, 92), 12, test$education)][, education := ifelse(test$edu %in% c(13:16), 16, test$education)][, education := ifelse(test$edu %in% c(17:19), 17, test$education)][, education := ifelse(test$edu %in% c(88,98,99), 88, test$education)]
 
 
@@ -151,9 +149,9 @@ table(sort(test$education))
 # else 這邊是跑可以設容許值的, gender =gender, birthyear <=2, 
 
 # thresholds now : 
-# birthyear %in% c(-2,4)
+# birthyear %in% c(-3,4)
 # gender == 
-# education %in% c(-4,4)
+# education %in% c(-6,6)
 
 detect_4<- function(x,y,z,u,data,ID){
   for (i in unique(data$ID)){
@@ -313,7 +311,6 @@ refine_kmeans <- function(x, centers){
   else{
     kmeans(x, centers = centers, algorithm="MacQueen", trace = TRUE)
   }
-  
 }
 # to deal with more groups than distinct data points
 # potential problem !! no error is listed
@@ -757,6 +754,8 @@ others<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationshi
 # merge up 
 
 fam_re <- rbind(spouses, elders,same_gen, son_1, son_2, daughters_1, daughters_2, daughters_in_law, next_gen, others)
+
+fam_re[, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(2:4), paste0(fam_re$k_group, "spouses"), NA)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(5:19), paste0(fam_re$k_group, "elders"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(20:29), paste0(fam_re$k_group, "same_generation"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(30:34), paste0(fam_re$k_group, "sons_1"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(35:39), paste0(fam_re$k_group, "sons_2"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(40:44), paste0(fam_re$k_group, "daughter_1"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(45:49), paste0(fam_re$k_group, "daughters_2"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(50:62), paste0(fam_re$k_group, "grand_sons"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(91:96), paste0(fam_re$k_group, "dauhters_in_law"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(70:83, 97), paste0(fam_re$k_group, "others"), fam_re$kk_group)]
 
 
 write.table(fam_re, file = "clear_fam_v1.csv", sep = ",") 
