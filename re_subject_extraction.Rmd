@@ -116,7 +116,7 @@ alive<- unique( intersect(demo_89$qser_no, dt_93$qser_no))
 demo<- demo_89[ qser_no %in% alive][, c("birthyear", "reduc", "ethnicty", "rsex", "qser_no")]
 
 dt_93<- demo[dt_93 , on= "qser_no"]
-dt_93[, grep("^i.", colnames(dt_93)) :=NULL ][, rage:= survey_year - birthyear + 1911 ]
+dt_93[, grep("^i.", colnames(dt_93)) :=NULL ][, rage:= survey_year - birthyear - 1911 ]
 ```
 
 
@@ -449,7 +449,7 @@ setnames(alive_99 ,c("SEX", "EDUC","ETHC"), c("rsex","reduc","ethnicty"))
 alive_99<- alive_99[, c("qser_no",'rsex','reduc','ethnicty','birthyear')]
 
 dt_99<- alive_99[dt_99, on="qser_no"]
-dt_99[, rage:= survey_year - birthyear][, grep("^i.", colnames(dt_99)) :=NULL ]
+dt_99[, rage:= survey_year - birthyear-1911][, grep("^i.", colnames(dt_99)) :=NULL ]
 
 
 for (i in colnames(dt_96_o)){
@@ -578,7 +578,7 @@ d3<- as.data.table(d3)
 
 d3<- d3[, qser_no := paste0(qtype, ser_no)][, c('qser_no', 'age', 'sex', 'educ', 'crt1', 'crt2', 'ethc')]
 dt_03o <- d3[dt_03o, on="qser_no"]
-dt_03o[,reduc := educ][,ethnicty := ethc][, grep("^i.", colnames(dt_03o)) :=NULL ][, birthyear := 2003 -1911- age][, c('sex','educ', 'ethc') :=NULL]
+dt_03o[,reduc := educ][,ethnicty := ethc][, grep("^i.", colnames(dt_03o)) :=NULL ][, birthyear := 2003 -1911- age][, c('sex','educ', 'ethc') :=NULL][, rage:= age][,age := NULL]
 
 ```
 
@@ -696,7 +696,7 @@ d4<- as.data.table(d4)
 
 d4<- d4[, qser_no := paste0(qtype, ser_no)][, c('crt1', 'crt2')]
 dt_03y <- d3[dt_03y, on="qser_no"]
-dt_03y[, grep("^i.", colnames(dt_03o)) :=NULL ][, birthyear := 2003 -1911- age]
+dt_03y[, grep("^i.", colnames(dt_03o)) :=NULL ][, birthyear := 2003 -1911- age][, rage:=age][, rage:=NULL]
 
 ```
 
@@ -821,7 +821,7 @@ names(d5)<- tolower(names(d5))
 d5<- d5[, qser_no:= paste0(qtype, ser_no)][, c('qser_no','educ07','ethc07','crt1', 'crt2','age07s')]
 
 dt_07<- d5[dt_07, on="qser_no"]
-dt_07[, reduc := ethc07][, age:= age07s][, ethnicty := ethc07][, grep("^i.", colnames(dt_07)) :=NULL ][, c('educ07', 'ethc07','age07s'):=NULL][, birthyear := 2007 -1911- age]
+dt_07[, reduc := ethc07][, rage:= age07s][, ethnicty := ethc07][, grep("^i.", colnames(dt_07)) :=NULL ][, c('educ07', 'ethc07','age07s','age'):=NULL][, birthyear := 2007 -1911- rage]
 
 
 ```
@@ -829,10 +829,12 @@ dt_07[, reduc := ethc07][, age:= age07s][, ethnicty := ethc07][, grep("^i.", col
 ```{r}
 dt <- rbind(dt_93,dt_96_o,dt_96_y, dt_99, dt_03o, dt_03y,dt_07, fill= TRUE)
 class(dt)
+dt[, c('age','sex','educ','ethc','i.crt1', 'i.crt2'):=NULL]
 
 # dt_89 have some distinct diseases and incomplete ADLs
 
 write.table(dt, file = "main_subject_0801.csv", sep = ",")
+
 ```
 
 
