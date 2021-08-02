@@ -62,13 +62,6 @@ library("conclust")
 
 
 ```{r}
-# 平行化處理
-library(parallel)
-library(MASS)
-
-```
-
-```{r}
 fam<- rbind(fam_96, fam_99, fam_03, fam_07)
 
 table(sort(fam$survey_year))
@@ -114,6 +107,7 @@ class(fam$adl_who_help)
 
 
 
+
 ```{r}
 # matching 
 fam<- read.csv("/Users/Ano/Desktop/HRS_Chao/TSLA/fam_v3.csv") # added spouse
@@ -129,6 +123,11 @@ test<- copy(fam)
 test[, birthyear := survey_year - age - 1911] # [, edu:= ifelse(test$edu == 88, NA, test1$edu) ]
 test[, education:= 88][, education := ifelse(test$edu %in% c(0,90), 0, test$education)][, education := ifelse(test$edu %in% c(1:6), 6, test$education)][, education := ifelse(test$edu %in% c(7:9),9 , test$education)][, education := ifelse(test$edu %in% c(10:12, 91, 92), 12, test$education)][, education := ifelse(test$edu %in% c(13:16), 16, test$education)][, education := ifelse(test$edu %in% c(17:19), 17, test$education)][, education := ifelse(test$edu %in% c(88,98,99), 88, test$education)]
 
+
+# test<- test[0<age &age <98 | education !=88] # 扣除大概 2000筆
+test<- test[0<age & age<98 & education !=88] # 扣除大概20000筆
+
+
 test[ ,education := ifelse(test$education== 88,NA ,test$education)]
 
 test[, qser_no:= paste0(qtype,  ser_no)]
@@ -136,7 +135,7 @@ test[, qser_no:= paste0(qtype,  ser_no)]
 # edu 放寬量表
 # 新量表： 0 未受正規教育, 6 小學畢業, 9 中學畢業, 12 高中畢業, 16大學畢業 17以上 88 (不適用, 不清楚, 其他, remaning) 
 
-table(sort(test$edu))
+table(sort(test$age))
 table(sort(test$education))
 
 ```
@@ -156,7 +155,7 @@ table(sort(test$education))
 # gender == 
 # education %in% c(-4,4)
 
-detect_4<- function(x,y,z,u){
+detect_4<- function(x,y,z,u,data,ID){
   for (i in unique(data$ID)){
   if(length(data[ ID ==i &survey_year ==x ]$birthyear)==0 | length(data[ ID ==i &survey_year ==y]$birthyear) ==0 |length(data[ ID ==i &survey_year ==z ]$birthyear)==0 | length(data[ ID ==i &survey_year ==u]$birthyear) ==0 |length(data[ ID ==i &survey_year ==x ]$gender)==0 | length(data[ ID ==i &survey_year ==y]$gender) ==0 |length(data[ ID ==i &survey_year ==z ]$gender)==0 | length(data[ ID ==i &survey_year ==u]$gender) ==0 |length(data[ ID ==i &survey_year ==x ]$education)==0 | length(data[ ID ==i &survey_year ==y]$education) ==0 |length(data[ ID ==i &survey_year ==z ]$education)==0 | length(data[ ID ==i &survey_year ==u]$education) ==0){next}
   
@@ -164,21 +163,25 @@ detect_4<- function(x,y,z,u){
      else{
   data[ID ==i, age_acc:= ifelse( (data[ ID ==i &survey_year ==u ]$birthyear  - data[ ID ==i &survey_year ==z]$birthyear) %in% c(-3:4) & (data[ ID ==i &survey_year ==z ]$birthyear  - data[ ID ==i &survey_year ==y]$birthyear) %in% c(-3:4) & (data[ ID ==i &survey_year ==y ]$birthyear  - data[ ID ==i &survey_year ==x]$birthyear) %in% c(-3:4), TRUE, FALSE)]
   data[ID ==i, gender_acc := ifelse(data[ ID ==i &survey_year ==z ]$gender  != data[ ID ==i &survey_year ==u]$gender | data[ ID ==i &survey_year ==z ]$gender != data[ ID ==i &survey_year ==y]$gender | data[ ID ==i &survey_year ==y ]$gender  != data[ ID ==i &survey_year ==x ]$gender , FALSE, TRUE) ]
-  data[ID ==i, education_acc :=  ifelse ( abs(data[ ID ==i &survey_year ==u ]$education  - data[ ID ==i &survey_year ==z]$education) >5|abs(data[ ID ==i &survey_year ==z ]$education  - data[ ID ==i &survey_year ==y]$education) >5 | abs(data[ ID ==i &survey_year ==y ]$education  - data[ ID ==i &survey_year ==x]$education) >5, FALSE, TRUE)]
+  data[ID ==i, education_acc :=  ifelse ( abs(data[ ID ==i &survey_year ==u ]$education  - data[ ID ==i &survey_year ==z]$education) >6|abs(data[ ID ==i &survey_year ==z ]$education  - data[ ID ==i &survey_year ==y]$education) >6 | abs(data[ ID ==i &survey_year ==y ]$education  - data[ ID ==i &survey_year ==x]$education) >6, FALSE, TRUE)]
      }}
 }
 
-# detect_lapply<- function(i){
-#   if(length(data[ ID ==i &survey_year ==1996 ]$birthyear)==0 | length(data[ ID ==i &survey_year ==1999]$birthyear) ==0 |length(data[ ID ==i &survey_year ==2003 ]$birthyear)==0 | length(data[ ID ==i &survey_year ==2007]$birthyear) ==0 |length(data[ ID ==i &survey_year ==1996 ]$gender)==0 | length(data[ ID ==i &survey_year ==1999]$gender) ==0 |length(data[ ID ==i &survey_year ==2003 ]$gender)==0 | length(data[ ID ==i &survey_year ==2007 ]$gender) ==0 |length(data[ ID ==i &survey_year ==1996 ]$education)==0 | length(data[ ID ==i &survey_year ==1999]$education) ==0 |length(data[ ID ==i &survey_year ==2003 ]$education)==0 | length(data[ ID ==i &survey_year ==2007 ]$education) ==0){next}
-#   
-#    else if(length(data[ ID ==i &survey_year ==1996 ]$birthyear)>1 | length(data[ ID ==i &survey_year == 1999]$birthyear) >1 |length(data[ ID ==i &survey_year ==2003 ]$birthyear)>1 | length(data[ ID ==i &survey_year ==2007 ]$birthyear) >1 |length(data[ ID ==i &survey_year ==1996 ]$gender)>1 | length(data[ ID ==i &survey_year ==1999 ]$gender) >1 |length(data[ ID ==i &survey_year ==2003 ]$gender)>1 | length(data[ ID ==i &survey_year ==2007 ]$gender) >1 |length(data[ ID ==i &survey_year ==1996 ]$education)>1 | length(data[ ID ==i &survey_year ==1999]$education) >1 |length(data[ ID ==i &survey_year ==2003 ]$education)>1 | length(data[ ID ==i &survey_year ==2007 ]$education) >1){ data[ID ==i, age_acc:= FALSE][ID ==i, gender_acc:= FALSE][ID ==i, education_acc:= FALSE] }
-#      else{
-#   data[ID ==i, age_acc:= ifelse( (data[ ID ==i &survey_year ==2007 ]$birthyear  - data[ ID ==i &survey_year ==2003]$birthyear) %in% c(-3:4) & (data[ ID ==i &survey_year ==2003 ]$birthyear  - data[ ID ==i &survey_year ==1999]$birthyear) %in% c(-3:4) & (data[ ID ==i &survey_year ==1999 ]$birthyear  - data[ ID ==i &survey_year ==1996]$birthyear) %in% c(-3:4), TRUE, FALSE)]
-#   data[ID ==i, gender_acc := ifelse(data[ ID ==i &survey_year ==2007 ]$gender  != data[ ID ==i &survey_year ==2003]$gender | data[ ID ==i &survey_year ==2003 ]$gender != data[ ID ==i &survey_year ==1999]$gender | data[ ID ==i &survey_year ==1999 ]$gender  != data[ ID ==i &survey_year ==1996 ]$gender , FALSE, TRUE) ]
-#   data[ID ==i, education_acc :=  ifelse ( abs(data[ ID ==i &survey_year ==2007 ]$education  - data[ ID ==i &survey_year ==2003 ]$education) >5|abs(data[ ID ==i &survey_year ==2003 ]$education  - data[ ID ==i &survey_year ==1999 ]$education) >5 | abs(data[ ID ==i &survey_year ==1999 ]$education  - data[ ID ==i &survey_year ==1996]$education) >5, FALSE, TRUE)]
-#      }}
+re_detect_4<- function(x,y,z,u){
+  for (i in unique(remaining$k_group)){
+  if(length(remaining[ k_group ==i &survey_year ==x ]$birthyear)==0 | length(remaining[ k_group ==i &survey_year ==y]$birthyear) ==0 |length(remaining[ k_group ==i &survey_year ==z ]$birthyear)==0 | length(remaining[ k_group ==i &survey_year ==u]$birthyear) ==0 |length(remaining[ k_group ==i &survey_year ==x ]$gender)==0 | length(remaining[ k_group ==i &survey_year ==y]$gender) ==0 |length(remaining[ k_group ==i &survey_year ==z ]$gender)==0 | length(remaining[ k_group ==i &survey_year ==u]$gender) ==0 |length(remaining[ k_group ==i &survey_year ==x ]$education)==0 | length(remaining[ k_group ==i &survey_year ==y]$education) ==0 |length(remaining[ k_group ==i &survey_year ==z ]$education)==0 | length(remaining[ k_group ==i &survey_year ==u]$education) ==0){next}
+    
+    else if(length(remaining[ k_group ==i &survey_year ==x ]$birthyear)>1 | length(remaining[ k_group ==i &survey_year ==y]$birthyear) >1 |length(remaining[ k_group ==i &survey_year ==z ]$birthyear)>1 | length(remaining[ k_group ==i &survey_year ==u]$birthyear) >1 |length(remaining[ k_group ==i &survey_year ==x ]$gender)>1 | length(remaining[ k_group ==i &survey_year ==y]$gender) >1 |length(remaining[ k_group ==i &survey_year ==z ]$gender)>1 | length(remaining[ k_group ==i &survey_year ==u]$gender) >1 |length(remaining[ k_group ==i &survey_year ==x ]$education)>1 | length(remaining[ k_group ==i &survey_year ==y]$education) >1 |length(remaining[ k_group ==i &survey_year ==z ]$education)>1 | length(remaining[ k_group ==i &survey_year ==u]$education) >1){ remaining[k_group ==i, k_age_acc:= FALSE][k_group ==i, k_gender_acc:= FALSE][k_group ==i, k_education_acc:= FALSE] }
+     else{
+  remaining[k_group ==i, k_age_acc:= ifelse( (remaining[ k_group ==i &survey_year ==u ]$birthyear  - remaining[ k_group ==i &survey_year ==z]$birthyear) %in% c(-2:3) & (remaining[ k_group ==i &survey_year ==z ]$birthyear  - remaining[ k_group ==i &survey_year ==y]$birthyear) %in% c(-2:3) & (remaining[ k_group ==i &survey_year ==y ]$birthyear  - remaining[ k_group ==i &survey_year ==x]$birthyear) %in% c(-2:3), TRUE, FALSE)]
+  remaining[k_group ==i, k_gender_acc := ifelse(remaining[ k_group ==i &survey_year ==z ]$gender  != remaining[ k_group ==i &survey_year ==u]$gender | remaining[ k_group ==i &survey_year ==z ]$gender != remaining[ k_group ==i &survey_year ==y]$gender | remaining[ k_group ==i &survey_year ==y ]$gender  != remaining[ k_group ==i &survey_year ==x ]$gender , FALSE, TRUE) ]
+  remaining[k_group ==i, k_education_acc :=  ifelse ( abs(remaining[ k_group ==i &survey_year ==u ]$education  - remaining[ k_group ==i &survey_year ==z]$education) >5|abs(remaining[ k_group ==i &survey_year ==z ]$education  - remaining[ k_group ==i &survey_year ==y]$education) >5 | abs(remaining[ k_group ==i &survey_year ==y ]$education  - remaining[ k_group ==i &survey_year ==x]$education) >5, FALSE, TRUE)]
+     }}
+}
 
-detect_3 <- function(y,z,u){
+
+
+detect_3 <- function(y,z,u,data,ID){
   for (x in unique(data$ID)){
   if(length(data[ ID ==x &survey_year ==y ]$birthyear)==0 | length(data[ ID ==x &survey_year ==z]$birthyear) ==0 |length(data[ ID ==x &survey_year ==u ]$birthyear)==0 |length(data[ ID ==x &survey_year ==y ]$gender)==0 | length(data[ ID ==x &survey_year ==z]$gender) ==0 |length(data[ ID ==x &survey_year ==u ]$gender)==0 |length(data[ ID ==x &survey_year ==y ]$education)==0 | length(data[ ID ==x &survey_year ==z]$education) ==0 |length(data[ ID ==x &survey_year ==u ]$education)==0){next}
   
@@ -187,11 +190,23 @@ detect_3 <- function(y,z,u){
      else{
   data[ID ==x, age_acc:= ifelse((data[ ID ==x &survey_year ==u ]$birthyear  - data[ ID ==x &survey_year ==z]$birthyear)%in% c(-3:4) & (data[ ID ==x &survey_year ==z ]$birthyear  - data[ ID ==x &survey_year ==y]$birthyear) %in% c(-3:4), TRUE, FALSE)]
   data[ID ==x, gender_acc := ifelse( data[ ID ==x &survey_year ==u ]$gender != data[ ID ==x &survey_year ==z]$gender | data[ ID ==x &survey_year ==z ]$gender  != data[ ID ==x &survey_year ==y]$gender , FALSE, TRUE) ]
-  data[ID ==x, education_acc :=  ifelse ( abs(data[ ID ==x &survey_year ==u ]$education  - data[ ID ==x &survey_year ==z]$education) >5 | abs(data[ ID ==x &survey_year ==z ]$education  - data[ ID ==x &survey_year ==y]$education) >5, FALSE, TRUE)]
+  data[ID ==x, education_acc :=  ifelse ( abs(data[ ID ==x &survey_year ==u ]$education  - data[ ID ==x &survey_year ==z]$education) >6 | abs(data[ ID ==x &survey_year ==z ]$education  - data[ ID ==x &survey_year ==y]$education) >6, FALSE, TRUE)]
      }}
 }
 
-detect_2<- function(u,v){
+re_detect_3 <- function(y,z,u){
+  for (x in unique(remaining$k_group)){
+  if(length(remaining[ k_group ==x &survey_year ==y ]$birthyear)==0 | length(remaining[ k_group ==x &survey_year ==z]$birthyear) ==0 |length(remaining[ k_group ==x &survey_year ==u ]$birthyear)==0 |length(remaining[ k_group ==x &survey_year ==y ]$gender)==0 | length(remaining[ k_group ==x &survey_year ==z]$gender) ==0 |length(remaining[ k_group ==x &survey_year ==u ]$gender)==0 |length(remaining[ k_group ==x &survey_year ==y ]$education)==0 | length(remaining[ k_group ==x &survey_year ==z]$education) ==0 |length(remaining[ k_group ==x &survey_year ==u ]$education)==0){next}
+    
+    else if(length(remaining[ k_group ==x &survey_year ==y ]$birthyear)>1 | length(remaining[ k_group ==x &survey_year ==z]$birthyear) >1 |length(remaining[ k_group ==x &survey_year ==u ]$birthyear)>1  |length(remaining[ k_group ==x &survey_year ==y ]$gender)>1 | length(remaining[ k_group ==x &survey_year ==z]$gender) >1 |length(remaining[ k_group ==x &survey_year ==u ]$gender)>1  |length(remaining[ k_group ==x &survey_year ==y ]$education)>1 | length(remaining[ k_group ==x &survey_year ==z]$education) >1 |length(remaining[ k_group ==x &survey_year ==u ]$education)>1 ){ remaining[k_group ==x, k_age_acc:= FALSE][k_group ==x, k_gender_acc:= FALSE][k_group ==x, k_education_acc:= FALSE] }
+     else{
+  remaining[k_group ==x, k_age_acc:= ifelse((remaining[ k_group ==x &survey_year ==u ]$birthyear  - remaining[ k_group ==x &survey_year ==z]$birthyear)%in% c(-2:3) & (remaining[ k_group ==x &survey_year ==z ]$birthyear  - remaining[ k_group ==x &survey_year ==y]$birthyear) %in% c(-2:3), TRUE, FALSE)]
+  remaining[k_group ==x, k_gender_acc := ifelse( remaining[ k_group ==x &survey_year ==u ]$gender != remaining[ k_group ==x &survey_year ==z]$gender | remaining[ k_group ==x &survey_year ==z ]$gender  != remaining[ k_group ==x &survey_year ==y]$gender , FALSE, TRUE) ]
+  remaining[k_group ==x, k_education_acc :=  ifelse ( abs(remaining[ k_group ==x &survey_year ==u ]$education  - remaining[ k_group ==x &survey_year ==z]$education) >5 | abs(remaining[ k_group ==x &survey_year ==z ]$education  - remaining[ k_group ==x &survey_year ==y]$education) >5, FALSE, TRUE)]
+     }}
+}
+
+detect_2<- function(u,v,data,ID){
 for (x in unique(data$ID)){
   if(length(data[ ID ==x &survey_year ==u ]$birthyear)==0 | length(data[ ID ==x &survey_year ==v]$birthyear) ==0 |length(data[ ID ==x &survey_year ==u ]$gender)==0 | length(data[ ID ==x &survey_year ==v]$gender) ==0 |length(data[ ID ==x &survey_year ==u ]$gender)==0 |length(data[ ID ==x &survey_year ==v ]$education)==0 | length(data[ ID ==x &survey_year ==u]$education) ==0 |length(data[ ID ==x &survey_year ==v ]$education)==0){next}
   
@@ -199,24 +214,52 @@ for (x in unique(data$ID)){
      else{
   data[ID ==x, age_acc:= ifelse( (data[ ID ==x &survey_year ==v ]$birthyear  - data[ ID ==x &survey_year ==u]$birthyear) %in% c(-3:4), TRUE, FALSE)]
   data[ID ==x, gender_acc := ifelse( data[ ID ==x &survey_year ==v ]$gender != data[ ID ==x &survey_year ==u]$gender , FALSE, TRUE) ]
-  data[ID ==x, education_acc :=  ifelse ( abs(data[ ID ==x &survey_year ==v ]$education  - data[ ID ==x &survey_year ==u]$education) >5, FALSE, TRUE)]
+  data[ID ==x, education_acc :=  ifelse ( abs(data[ ID ==x &survey_year ==v ]$education  - data[ ID ==x &survey_year ==u]$education) >6, FALSE, TRUE)]
+     }}
+}
+
+re_detect_2<- function(u,v){
+for (x in unique(remaining$k_group)){
+  if(length(remaining[ k_group ==x &survey_year ==u ]$birthyear)==0 | length(remaining[ k_group ==x &survey_year ==v]$birthyear) ==0 |length(remaining[ k_group ==x &survey_year ==u ]$gender)==0 | length(remaining[ k_group ==x &survey_year ==v]$gender) ==0 |length(remaining[ k_group ==x &survey_year ==u ]$gender)==0 |length(remaining[ k_group ==x &survey_year ==v ]$education)==0 | length(remaining[ k_group ==x &survey_year ==u]$education) ==0 |length(remaining[ k_group ==x &survey_year ==v ]$education)==0){next}
+  
+  else if(length(remaining[ k_group ==x &survey_year ==u ]$birthyear)>1 | length(remaining[ k_group ==x &survey_year ==v]$birthyear) >1 |length(remaining[ k_group ==x &survey_year ==u ]$gender)>1 | length(remaining[ k_group ==x &survey_year ==v]$gender) >1 |length(remaining[ k_group ==x &survey_year ==u ]$education)>1 | length(remaining[ k_group ==x &survey_year ==v]$education) >1 ){ remaining[k_group ==x, k_age_acc:= FALSE][k_group ==x, k_gender_acc:= FALSE][k_group ==x, k_education_acc:= FALSE] }
+     else{
+  remaining[k_group ==x, k_age_acc:= ifelse( (remaining[ k_group ==x &survey_year ==v ]$birthyear  - remaining[ k_group ==x &survey_year ==u]$birthyear) %in% c(-2:3), TRUE, FALSE)]
+  remaining[k_group ==x, k_gender_acc := ifelse( remaining[ k_group ==x &survey_year ==v ]$gender != remaining[ k_group ==x &survey_year ==u]$gender , FALSE, TRUE) ]
+  remaining[k_group ==x, k_education_acc :=  ifelse ( abs(remaining[ k_group ==x &survey_year ==v ]$education  - remaining[ k_group ==x &survey_year ==u]$education) >5, FALSE, TRUE)]
      }}
 }
 
 
-detect<- function(x, y, z,u ){
-  detect_4(x,y,z,u)
-  detect_3(x,y,z)
-  detect_3(y,z,u)
-  detect_3(x,y,u)
+
+detect<- function(x,y,z,u,data =data ,ID ="ID"){
+  detect_4(x,y,z,u,data,ID)
+  detect_3(x,y,z,data,ID)
+  detect_3(y,z,u,data,ID)
+  detect_3(x,y,u,data,ID)
   for (i in c(x,y,z,u)){
     for (j in c(x,y,z,u)){
       if (i==j){next}
       else if (i<j)
-        detect_2(i,j)
+        detect_2(i,j,data,ID)
       else if (i>j){next}
     }
   } 
+}
+
+
+re_detect<- function(x,y,z,u){
+  remaining[, k_age_acc :=NA][, k_education_acc :=NA][, k_gender_acc :=NA]
+  re_detect_4(x,y,z,u)
+  re_detect_3(x,y,z)
+  re_detect_3(y,z,u)
+  re_detect_3(x,y,u)
+  re_detect_2(x,y)
+  re_detect_2(x,z)
+  re_detect_2(x,u)
+  re_detect_2(y,z)
+  re_detect_2(y,u)
+  re_detect_2(z,u)
 }
 
 #################################
@@ -239,26 +282,64 @@ getmode <- function(x) {
 
 
 # weighting 在這裡改 (hyper parameter ???)
-prepare_kmeans<- function(x){
+prepare_kmeans<- function(x, problem_data){
+  
  problem_data[,education := ifelse(is.na(problem_data$education), 88, problem_data$education)]
  problem_data[ qser_no == x, birthyear:=  survey_year - age - 1911][qser_no ==x, k_gender:= 7*gender][qser_no==x, k_education:=5*education][qser_no==x, k_birthyear:=3*birthyear]
+ problem_data[qser_no ==x , distinct_1 := paste0(problem_data[qser_no ==x, ]$relationship, problem_data[qser_no==x, ]$gender,problem_data[qser_no==x, ]$education,problem_data[qser_no==x, ]$birthyear)] [qser_no ==x, distinct_2 := paste0(problem_data[qser_no ==x, ]$relationship, problem_data[qser_no==x, ]$gender,problem_data[qser_no==x, ]$bitthyear)] [qser_no ==x, distinct_3 := paste0(problem_data[qser_no ==x, ]$relationship, problem_data[qser_no==x, ]$gender,problem_data[qser_no==x, ]$education)]
+ 
 }
+
+
+distinct<-function(x){
+  if (c(98,99) %in% unique(data[qser_no ==x]$age)){
+    length(unique(data[qser_no ==x]$distinct_3))
+  }
+  else if (88 %in% unique(data[qser_no ==x]$education)){
+    length(unique(data[qser_no ==x, ]$distinct_2))
+  }
+    else{
+  length(unique(data[qser_no ==x, ]$distinct_1))
+  }}
+
+
+refine_kmeans <- function(x, centers){
+  
+  if( distinct(i) < centers){
+    kmeans.cluster<- list(
+   cluster<- rep("error",nrow(x))
+    )
+  }
+  else{
+    kmeans(x, centers = centers, algorithm="MacQueen", trace = TRUE)
+  }
+  
+}
+# to deal with more groups than distinct data points
+# potential problem !! no error is listed
+
+
 
 # get k means, cluster 數量取最多的那年的個數
 # 如果birthyear 或是 education 有 88 或是 99 -> 用剩下的其他變數做clusters
-get_kmeans <- function(x){
-  if (99 %in% unique(problem_data[qser_no ==x]$age)){
-    kmeans.cluster <- kmeans(problem_data[qser_no ==x, .SD , .SDcols = c("k_gender","k_education", "relationship")], centers= sum(problem_data[qser_no ==x]$survey_year == getmode(problem_data[qser_no ==x]$survey_year)), algorithm="MacQueen", trace = TRUE)
-problem_data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]}
+get_kmeans <- function(x, data){
+  if ( x %in% problems){
+   if (c(98,99) %in% unique(data[qser_no ==x]$age)){
+    kmeans.cluster <- refine_kmeans(data[qser_no ==x, .SD , .SDcols = c("k_gender","k_education", "relationship")], centers= sum(data[qser_no ==x]$survey_year == getmode(data[qser_no ==x]$survey_year)))
+data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]}
   
-  else if (88 %in% unique(problem_data[qser_no ==x]$education)){
-    kmeans.cluster <- kmeans(problem_data[qser_no ==x, .SD , .SDcols = c("k_birthyear","k_gender", "relationship")], centers= sum(problem_data[qser_no ==x]$survey_year == getmode(problem_data[qser_no ==x]$survey_year)), algorithm="MacQueen", trace = TRUE)
-problem_data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]}
+   else if (88 %in% unique(data[qser_no ==x]$education)){
+    kmeans.cluster <- refine_kmeans(data[qser_no ==x, .SD , .SDcols = c("k_birthyear","k_gender", "relationship")], centers= sum(data[qser_no ==x]$survey_year == getmode(data[qser_no ==x]$survey_year)))
+data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]}
   
-  else{
-kmeans.cluster <- kmeans(problem_data[qser_no ==x, .SD , .SDcols = c("k_birthyear","k_gender","k_education", "relationship")], centers= sum(problem_data[qser_no ==x]$survey_year == getmode(problem_data[qser_no ==x]$survey_year)), algorithm="MacQueen", trace = TRUE)
-problem_data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]
+   else{
+kmeans.cluster <- refine_kmeans(data[qser_no ==x, .SD , .SDcols = c("k_birthyear","k_gender","k_education", "relationship")], centers= sum(data[qser_no ==x]$survey_year == getmode(data[qser_no ==x]$survey_year)))
+data[qser_no ==x ,k_group:= paste(qser_no,kmeans.cluster$cluster, sep = "_")]
+  }}
+ else{
+  data[qser_no ==x , k_group := "no problem"]
 }}
+
 
 
 # 有多少解決了？
@@ -283,240 +364,313 @@ one2one<- function(mydat, col1, col2) {
 ```
 
 
+
 ```{r}
-# 02:09
-# Allowed to use k-means
-# 先挑出絕對沒問題的人：
-# 先處理長輩系列
-# data[, qser_no:= paste0(qtype,  ser_no)]
-# parents[, edu := ifelse(edu == 90, 0.5, parents$edu)] # 90識字 -> 0.5 識字
-# 先跑 1996, 1999, 2003, 2007都健在的人
-# 2007 -2003 允許 c(-1:2)
+# more cluster centers than distinct data points.
+
+distinct<-function(x){length(unique(paste0(problem_data[qser_no ==x, ]$relationship, problem_data[qser_no==x, ]$gender, problem_data[qser_no==x, ]$birthyear, problem_data[qser_no==x, ]$education)))}
+
+distinct("B3310")
+
+get_kmeans("B3310")
+View(problem_data[qser_no =="B3310"])
+sum(problem_data[qser_no =="B3310"]$survey_year == getmode(problem_data[qser_no =="B3310"]$survey_year))
+kmeans(problem_data[qser_no =="B3310", .SD , .SDcols = c("k_gender","k_education", "relationship","birthyear")], centers = 9, algorithm = "MacQueen")
+
+Kmeans(problem_data[qser_no =="B3310", .SD , .SDcols = c("k_gender","k_education", "relationship")], centers = 10,method = "euclidean")
 
 
-
-data<- test[relationship %in% c(5:19)]
-
-
-detect(1996,1999,2003,2007)
-# problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
-problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
-
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
-
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
-s<- as.data.table(as.matrix(s))
-unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve)
-
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
-
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
-
-
-parents_problem<-problems
-parents_solve<- unique(data[qser_no %in% solve]$qser_no)
-parents_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
-
-#也可以用ID紀錄
-#parents_unsolve <- data[qser_no %in% unsolve]$ID
-
-
-View(data[qser_no %in% unsolve])
-
-# 有出問題的人, 70位, 198筆資料/ 1032筆
-
-# NA就是無法比較的人，因為obs只有一個
-# 會有一個主要問題： edu (0, 6, 90) 區間跳太大了 （不識字, 小學一年級, 識字） 這也會間接影響到k-means
-# 會挑出不識字跟上過小學的人 edu 
 ```
 
 ```{r}
-# same generations :same_generation
+# spouses
+data<- test[relationship %in% c(2:4)]
+original <- copy(data)
+
+detect(1996,1999,2003,2007, data, "ID")
+problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0][, k_group := NA] #精準的資料
+# spouses 只取最精準的
+spouses_full<- percise
+
+spouses<- percise[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
+
+
+
+```
+
+
+
+```{r}
+# elders
+data<- test[relationship %in% c(5:19)]
+original <- copy(data)
+
+detect(1996,1999,2003,2007, data, "ID")
+# problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
+problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
+
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
+
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
+
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
+s<- as.data.table(as.matrix(s))
+unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
+
+
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+elders_all <- try
+elders<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
+
+```
+
+```{r}
+
+# same generations 
 data <- test[relationship %in% c(20:29)]
 
-detect(1996,1999,2003,2007)
-# problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
+
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
+
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
 
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
 
-# same_generation_unsolve <- data[qser_no %in% unsolve]$ID
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
+# origin : 324, rescue_1 10, rescue_2 6, total 276/ 324
 
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
-
-same_generation<-ss
-
-
-# 多兩個obs ...  wtf 
-
-
-same_gen_problem<-problems
-same_gen_solve<- unique(data[qser_no %in% solve]$qser_no)
-same_gen_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
-
-
-# View(data[qser_no %in% unsolve])
-
-
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+same_gen_all<- try
+same_gen<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
 ```
 
 ```{r}
-# sons
-# 先把age == 98, 99  排除
+# sons_1
 
+data <- test[relationship %in% c(30:34)]
 
-data <- test[relationship %in% c(30:39)]
-data[, age:= ifelse(data$age %in% c(98, 99), NA, data$age)]
-
-
-detect(1996,1999,2003,2007)
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
 # problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
 
-problem_data[, age:= ifelse( is.na(problem_data$age) ,99, problem_data$age)]
-# birthyear, education 都會有na 問題
-problem_data[, education := ifelse(is.na(problem_data$education), 88, problem_data$education )]
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
 
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
-
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
-
-sons<-ss
-
-sons_problem<-problems
-sons_solve<- unique(data[qser_no %in% solve]$qser_no)
-sons_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
 
 
-View(problem_data[qser_no %in% unsolve & education_acc !=TRUE])
-gg<- unique(data$qser_no)
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+son_1_all <-try
+son_1<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
+# origin :36376,  percise : 32283 rescue_1 : 432 rescue_2: 1212 total 33956/36376
+
+data <- test[relationship %in% c(35:39)]
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
+# problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
+problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
+
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
+
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
+
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
+s<- as.data.table(as.matrix(s))
+unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
+
+
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+son_2_all <-try
+son_2<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
 ```
+
+
 
 ```{r}
-data <- test[relationship %in% c(40:49)]
+# 前四女
+data <- test[relationship %in% c(40:44)]
 
-detect(1996,1999,2003,2007)
+
+
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
 # problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
 
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
+
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+daughters_1<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
+# origin 33914, percise 28461, rescue_1 642, rescue_2 1143, total 30352/33914
 
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
-
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
-
-
-daughters<-ss
-
-daughters_problem<-problems
-daughters_solve<- unique(data[qser_no %in% solve]$qser_no)
-daughters_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
-ss<- unique(data$ser_no)
-ssss<- unique(problem_data[ qser_no %in% daughters_unsolve & education_acc == TRUE]$ser_no)
-sssss<- problem_data[qser_no %in% daughters_unsolve]
-# "A1018" %in% daughters_unsolve  # 5女以後要額外處理
 ```
+
+
+```{r}
+# 五女問題
+data <- test[relationship %in% c(45:49)]
+
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
+# problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
+problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
+
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
+
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
+
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
+s<- as.data.table(as.matrix(s))
+unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
+
+
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+daughter_2_all <- try
+daughters_2<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
+
+# origin : 1644筆, percise 728, rescue_1 95, rescue_2 332, total 1155/1644
+# origin: 2434, 1247, 168, 391, total : 1806/ 2434
+
+
+```
+
+
 
 ```{r}
 # 孫輩
 
 data <- test[relationship %in% c(50:62)]
 
-detect(1996,1999,2003,2007)
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
 # problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
 
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
 
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+next_gen_all <- try
+next_gen<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
+# original 13937, percise : 4566, rescue_1 :131, rescue_2 : 1860, total 6557/ 13937
 
-grandchild<-ss
 
-grandchild_problem<-problems
-grandchild_solve<- unique(data[qser_no %in% solve]$qser_no)
-grandchild_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
 
 ```
 
@@ -524,39 +678,38 @@ grandchild_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
 # 媳婦
 data <- test[relationship %in% c(91:96)]
 
-detect(1996,1999,2003,2007)
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
 # problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
 
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
+
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
+
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
 
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+daughters_in_law_all <-try
+daughters_in_law<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
-
-daughter_in_law<-ss
-
-daughter_in_law_problem<-problems
-daughter_in_law_solve<- unique(data[qser_no %in% solve]$qser_no)
-daughter_in_law_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
-
-View(data[qser_no %in% daughter_in_law_unsolve]) # edu 問題比較大
+# origin : 7277, percise 6699, rescue_1 271, rescue_2 77 , total 7074/ 7277 
 
 ```
 
@@ -565,302 +718,50 @@ View(data[qser_no %in% daughter_in_law_unsolve]) # edu 問題比較大
 # Others 
 data <- test[relationship %in% c(70:83, 97)]
 
-detect(1996,1999,2003,2007)
+original <- copy(data)
+detect(1996,1999,2003,2007, data, "ID")
 # problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE | education_acc ==FALSE]$qser_no) 
 problems <- unique(data[age_acc ==FALSE | gender_acc ==FALSE| education_acc == FALSE]$qser_no) 
-problem_data <- data[ qser_no %in% problems]
+percise<- data[qser_no %in% setdiff(data$qser_no, problems)][, problem:= 0] #精準的資料
+data <- data[qser_no %in% problems]
+# problem_data <- data[ qser_no %in% problems][age!=99 | education!= 88]
 
+for (i in unique(data$qser_no)){
+  prepare_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  prepare_kmeans(i)}
+for (i in unique(data$qser_no)){
+  get_kmeans(i, data)}
 
-for (i in unique(problem_data$qser_no)){
-  get_kmeans(i)}
-
-s<-one2one(problem_data, "ID", "k_group")
+s<-one2one(data[qser_no %in% problems], "ID", "k_group")
 s<- as.data.table(as.matrix(s))
 unsolve<- unique(data[ID %in% unique(s$V1)]$qser_no)
-solve<- setdiff( problems, unsolve) # solve的人ID要調整
+solve_1<- setdiff( problems, unsolve) # solve的人ID要調整
+rescue_1 <- data[qser_no %in% solve_1][, problem :=1] #稍微impercise的人
 
+remaining<- copy(data[qser_no %in% unsolve])
+re_detect(1996,1999,2003,2007) # is a mess的人
 
-ss<- copy(data) # 把k-group帶進來
-problem_data[, "formatch":= paste0(problem_data$ID, problem_data$age, problem_data$work)]
-ss[, "formatch":= paste0(ss$ID, ss$age, ss$work)]
-ttt<- problem_data[, c("formatch", "k_group")]
-ss<- ttt[ss,  on = "formatch" ]
+# rescue_3 <- remaining[age_acc ==TRUE& education_acc ==TRUE &gender_acc ==TRUE]
+rescue_2 <- remaining[k_age_acc == TRUE & k_education_acc ==TRUE & k_gender_acc ==TRUE][ ,problem:=2]
 
-ss[, problems := 0][, problems := ifelse(qser_no %in% problem_data$qser_no, 1, ss$problems)][, problems := ifelse(qser_no %in% unsolve, 2, ss$problems)][, formatch := NULL]
 
-others<-ss
+try <- rbind(percise, rescue_1, rescue_2, fill=TRUE)
+others<- try[, c("qser_no","survey_year", "ID","k_group", "problem","relationship","gender","age","edu","education","work","marstat","livstat","livwhere","meet","tele","adl_who_help")]
 
-others_problem<-problems
-others_solve<- unique(data[qser_no %in% solve]$qser_no)
-others_unsolve <- unique(data[qser_no %in% unsolve]$qser_no)
-
-
-
-```
-
-```{r}
-
-# View(parents[qser_no == "A947"])
-# View(parents[ser_no == "1009"])
-# 問題一 ： 你看1號，感覺是兩個人，但kmeans 因為被限制在2個，所以也做不出不一樣的group ??? 
-# 問題二 ：有機會出現2003 cluster出2003年有兩個
-# View(parents[qser_no %in% unsolve])
-# View(parents[qser_no %in% solve]) # 可以大部分的解決掉
-
-# 剩下4個的qser_no
-
-# 基本上是對的起來的，有幾個問題就是， edu 在parenst
-
-# 小紀錄：
-# 透過acc我們可以找出奇怪的人
-# kmeans 基本上可以抓出對的關係，除非這個人的edu太怪
-
-
-# another problem encounter : 2007 年有兩個observation 
-
-# c1<- c("ID", "survey_year", "birthyear", "gender", "edu", "k_group")
-# c2 <- c("A123_41", 2003, 40, 0, 17, 1)
-# c3 <- c("A123_41", 2007, 40, 0, 10, 2)
-# c4 <- c("A123_42", 2003, 44, 0, 10, 2)
-# c5 <- c("A123_42", 2007, 44, 0, 10, 2)
-# 
-# df <-t(data.frame(c1, c2,c3,c4,c5))
-# 
-# View(df)
-
-# 解決之道：限制一個cluster 的數量不能超過這個ID存活期數？
-```
-
-
-
-
-
-
-```{r}
-
-# 先挑出有問題仔
-# 容許值在這裡改！
-# if 是只要有一年沒有資料，就會填入NA （無法比較）
-# else if 這邊是處理當一年有大於一筆的資料，會整個都變FALSE
-# else 這邊是跑可以設容許值的, gender =gender, birthyear <=2, 
-for (x in unique(test1$ID)){
-  if(length(test1[ ID ==x &survey_year ==2003 ]$birthyear)==0 | length(test1[ ID ==x &survey_year ==2007]$birthyear) ==0 |length(test1[ ID ==x &survey_year ==2003 ]$gender)==0 | length(test1[ ID ==x &survey_year ==2007]$gender) ==0 |length(test1[ ID ==x &survey_year ==2003 ]$edu)==0 | length(test1[ ID ==x &survey_year ==2007]$edu) ==0){next}
-   else if(length(test1[ ID ==x &survey_year ==2003 ]$birthyear)>1 | length(test1[ ID ==x &survey_year ==2007]$birthyear) >1 |length(test1[ ID ==x &survey_year ==2003 ]$gender)>1 | length(test1[ ID ==x &survey_year ==2007]$gender) >1 |length(test1[ ID ==x &survey_year ==2003 ]$edu)>1 | length(test1[ ID ==x &survey_year ==2007]$edu) >1){ test1[ID ==x, age_acc:= FALSE][ID ==x, gender_acc:= FALSE][ID ==x, edu_acc:= FALSE] }
-     else{
-  test1[ID ==x, age_acc:= test1[ ID ==x &survey_year ==2003 ]$birthyear  - test1[ ID ==x &survey_year ==2007]$birthyear <=2]
-  test1[ID ==x, gender_acc := test1[ ID ==x &survey_year ==2003 ]$gender  == test1[ ID ==x &survey_year ==2007]$gender]
-  test1[ID ==x, edu_acc :=  abs(test1[ ID ==x &survey_year ==2003 ]$edu  - test1[ ID ==x &survey_year ==2007]$edu) <=4]
-     }}
-
-
-problems <- unique(test1[age_acc ==FALSE | gender_acc ==FALSE | edu_acc ==FALSE]$ser_no) 
-# 有出問題的人
-
-
-
-View(test1[ser_no == "1"])
-View(test1[ser_no == "1009"])
-# 問題一 ： 你看1號，感覺是兩個人，但kmeans 因為被限制在2個，所以也做不出不一樣的group ??? 
-# 問題二 ：有機會出現2003 cluster出2003年有兩個
-
-
-getmode <- function(v) {
-   uniqv <- unique(v)
-   uniqv[which.max(tabulate(match(v, uniqv)))]
-}
-prepare_kmeans<- function(x){
- test1[ ser_no == x, birthyear:=  survey_year - age - 1911][ser_no ==x, k_gender:= 7*gender][ser_no==x, k_edu:=5*edu][ser_no==x, k_birthyear:=3*birthyear]
-}
-get_kmeans <- function(x){
-kmeans.cluster <- kmeans(test1[ser_no ==x, .SD , .SDcols = c("k_birthyear","k_gender","k_edu", "relationship")], centers= sum(test1[ser_no ==x]$survey_year == getmode(test1[ser_no ==x]$survey_year)), algorithm="MacQueen", trace = TRUE)  # k-means 的cluster 數量
-test1[ser_no ==x ,group:= paste(ser_no,kmeans.cluster$cluster, sep = "_")]
-}
-
-
-for (i in unique(test1$ser_no)){
-  prepare_kmeans(i)
-  get_kmeans(i)
-}
-
-
-View(test1[ser_no %in% problems])
-# 機率性出現education 記錯，就被分到奇怪組別的人
-
-
-# 小紀錄：
-# 透過acc我們可以找出奇怪的人
-# kmeans 最有用的地方是像是他說2003年他有兩個長子這種狀況
-# 對於應付報錯或是rematch目前實作上還不夠強
-# 可以試試看 max number of a group( cluster)
-
-
-test11<- test1[ser_no == 817,]
-
-
-```
-
-```{r}
-# ML
-library(tensorflow)
-library(keras)
-
-mnist <- dataset_mnist()
-mnist$train$x <- mnist$train$x/255
-mnist$test$x <- mnist$test$x/255
-
-```
-
-# 這樣常發生的意外： 
-# 1. 學歷倒退嚕
-# 2. 部分親屬關係對不起來（e.g. 2003年是外孫， 2007年變內外不明）
-# 3. 內孫女、外孫女有兩個 (51, 52, 54)
-# 4. 有時候adl_who_helps 會是38 （兒子們）
-```{r}
-# matching !
-
-test<- copy(fam)
-
-table(sort(fam$relationship, decreasing = F))
-
-
-
-# check spouse 
-fam_spouse<- test[relationship ==2 & age %in% c(10: 150), ]  #先把年令太奇怪的剔除
-
-spouse_check <- fam_spouse[,c("ID","survey_year","relationship","gender","age","edu")]
-
-spouse_check<- spouse_check[,gender:= ifelse(spouse_check$gender != 1, 0, 1)]
-
-spouse_check<- spouse_check[order(ID)][, gender_sum := sum(gender), by='ID'][,count:= .N, by="ID"]
-spouse_check<- spouse_check[order(ID)][, age_diff := age - lag(age), by='ID']
-spouse_check<- spouse_check[order(ID)][, age_diff := ifelse( is.na(spouse_check$age_diff), 0, spouse_check$age_diff)]
-
-valid_spouse_ID<- spouse_check[gender_sum == count| gender_sum ==0][age_diff <=5][, .(ID)]
-
-inva1<- spouse_check[age_diff >=5 ]
-inva2<- spouse_check[gender_sum != count & is.na(gender_sum)  ]
-
-invalid_spouse<- funion(inva1, inva2) ####
-invalid_spouse_ID <- unique( invalid_spouse$ID)
-# 有20人長得怪怪的
-
-
-# check sons 
-sons<- test[relationship %in% c(30:38)] 
-# sons<- test[relationship %in% c(30:38) & age %in% c(0: 80),] 
-
-sons_check <- sons[,c("ID","survey_year","relationship","gender","age","edu")]
-
-sons_check<- sons_check[,gender:= ifelse(sons_check$gender != 1, 0, 1)]
-sons_check<- sons_check[order(ID)][, gender_sum := sum(gender), by='ID'][,count:= .N, by="ID"]
-sons_check<- sons_check[order(ID)][, age_diff := age - lag(age), by='ID']
-sons_check<- sons_check[order(ID)][, age_diff := ifelse( is.na(sons_check$age_diff), 0, sons_check$age_diff)]
-
-
-# valid_sons_ID<- sons_check[gender_sum == count| gender_sum ==0][age_diff <=5][, .(ID)]
-
-inva1<- sons_check[age_diff %nin% c(0:6) ]
-inva2<- sons_check[gender_sum != count ]
-
-invalid_sons<- funion(inva1, inva2) ####
-invalid_sons_ID <- unique( invalid_sons$ID)
-invalid_sons <- sons_check[ID %in% invalid_sons_ID][, .SD, .SDcols = c("ID","survey_year","gender", "age", "edu", "age_diff")]
-# 有2295人長得怪怪的，預計會影響到7518筆 obs/ 38909
-
-# check daughters 
-dau<- test[relationship %in% c(40:49)] 
-# sons<- test[relationship %in% c(30:38) & age %in% c(0: 80),] 
-
-dau_check <- dau[,c("ID","survey_year","relationship","gender","age","edu")]
-
-dau_check<- dau_check[,gender:= ifelse(dau_check$gender != 1, 0, 1)]
-dau_check<- dau_check[order(ID)][, gender_sum := sum(gender), by='ID'][,count:= .N, by="ID"]
-dau_check<- dau_check[order(ID)][, age_diff := age - lag(age), by='ID']
-dau_check<- dau_check[, age_diff := ifelse( is.na(dau_check$age_diff), 0, dau_check$age_diff)]
-
-
-inva1<- dau_check[age_diff %nin% c(0:6) ]
-inva2<- dau_check[gender_sum != 0 ]
-
-invalid_dau<- funion(inva1, inva2) ####
-invalid_dau_ID <- unique( invalid_dau$ID)
-invalid_dau <- dau_check[ID %in% invalid_dau_ID][, .SD, .SDcols = c("ID","survey_year","gender", "age", "edu", "age_diff")]
-# 有3109人長得怪怪的，預計會影響到10364筆 obs/ 37798
-# 女兒年齡誤差的問題比較大
-
+# origin : 533, percise : 458, rescue_1 :25, rescue_2 : 8, total : 491/ 533
 
 ```
 
 
 ```{r}
-# rematch
-fam[,rID:= paste0(qtype, ser_no)]
+# merge up 
 
-ttttt<- fam[rID == "A1012"]
-ttttt[,birthyear := survey_year-1911-age, ]
-# sons: 
-sons<- test[relationship %in% c(30:38)] 
-
-tt<- sons[ser_no %in% c(2)][, .SD, .SDcols = c("ser_no","age","gender", "edu","survey_year", "relationship")]
-tt[,birthyear := survey_year-1911-age, ]
-ttt<- tt[,sum(gender), by=birthyear]
-tttt<- tt[, .SD[.N ==1], .(birthyear)]
+fam_re <- rbind(spouses, elders,same_gen, son_1, son_2, daughters_1, daughters_2, daughters_in_law, next_gen, others)
 
 
-# 邏輯上來說，先用ser_no與輩份分群後 ：妻子/ 長輩/兒子/ 女兒/ 孫子/ 其他人
-# 1. 找出可以分成幾群
-# 2. 貼上群的標籤
-# 3. paste0()
+write.table(fam_re, file = "clear_fam_v1.csv", sep = ",") 
 
 
 
-# 遇到的困難：
-# 我可以用肉眼分辨每一個ser_no的群集，設立群族後用ifelse分好
-# 但要怎麼自動化到每一個ser_no  （自動決定要分幾個群，因為要比較，所以比較的benchmark是誰） 我目前會用的只是 diff  -> cluster?? 
-# C(3,2)的條件式
-# 貼上群的標籤
-# 或甚至我可以先把沒問題的人搬出去？（非常consist的）e.g. birthyear 57 57 57 
-
-
-# logic:  C(3,2)
-# birth_year_diff <=1
-# edu_diff <= 2
-# gender.mean() 
-# make it a group
-
-
-
-
-data <- data.frame(X=ceiling(rnorm(10000, 500, 10)), Y=runif(10000, 0, 3000))
-data$Groups <- cut(data$Y, seq(0, 3000, 100)) # Create a categorical variable for each range
-
-
-tt[, group:= cut(tt$birthyear), 2 ]
-
-by(data$X, data$Group, function(x) length(unique(x)))
-
-
-
-
-
-
-
-
-
-
-
-# 1. 技術上怎麼寫分群的code, and apply to multiple ser_no
-# 1-1 : 我之前分類的依據都是創出diff ，但這裡好像沒有比較的對象，但要建立出cluster （但又不是ml）
-# C3取2個條件，怎麼寫？
-# 2. 貼上群的標籤
-
-# 在誤差裡面這件事情，只能創diff之後控制嗎？
 
 ```
-
-
-
-
