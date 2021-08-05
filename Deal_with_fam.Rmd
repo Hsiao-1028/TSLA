@@ -758,7 +758,7 @@ fam_re <- rbind(spouses, elders,same_gen, son_1, son_2, daughters_1, daughters_2
 fam_re[, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(2:4), paste0(fam_re$k_group, "spouses"), NA)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(5:19), paste0(fam_re$k_group, "elders"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(20:29), paste0(fam_re$k_group, "same_generation"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(30:34), paste0(fam_re$k_group, "sons_1"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(35:39), paste0(fam_re$k_group, "sons_2"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(40:44), paste0(fam_re$k_group, "daughter_1"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(45:49), paste0(fam_re$k_group, "daughters_2"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(50:62), paste0(fam_re$k_group, "grand_sons"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(91:96), paste0(fam_re$k_group, "dauhters_in_law"), fam_re$kk_group)][, kk_group:= ifelse( !is.na(fam_re$k_group) & fam_re$relationship %in% c(70:83, 97), paste0(fam_re$k_group, "others"), fam_re$kk_group)]
 
 
-write.table(fam_re, file = "clear_fam_v1.csv", sep = ",") 
+write.table(fam_re, file = "family_member_0801.csv", sep = ",") 
 
 
 
